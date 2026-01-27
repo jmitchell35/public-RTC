@@ -6,26 +6,17 @@
 	"image": "mcr.microsoft.com/devcontainers/rust:2-1-bullseye",
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
-	"mounts": [
+	// "mounts": [
       // Mount Git config and SSH keys
-      "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind",
-      "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
 	// 	{
 	// 		"source": "devcontainer-cargo-cache-${devcontainerId}",
 	// 		"target": "/usr/local/cargo",
 	// 		"type": "volume"
 	// 	}
-	],
+	// ],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {
-      // Install Git in container
-      "ghcr.io/devcontainers/features/git:1": {}
-    },
-
-    // Mount parent directory to access .git
-    "workspaceMount": "source=${localWorkspaceFolder}/..,target=/workspace,type=bind",
-    "workspaceFolder": "/workspace/Front",
+	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

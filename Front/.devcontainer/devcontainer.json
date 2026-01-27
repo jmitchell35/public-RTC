@@ -9,17 +9,5 @@
     "jetbrains" : {
       "backend" : "WebStorm"
     }
-  },
-  "features": {
-    // Install Git in container
-    "ghcr.io/devcontainers/features/git:1": {}
-  },
-  "mounts": [
-    // Mount Git config and SSH keys
-    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
-  ],
-  // Mount parent directory to access .git
-  "workspaceMount": "source=${localWorkspaceFolder}/..,target=/workspace,type=bind",
-  "workspaceFolder": "/workspace/Front"
+  }
 }
