@@ -1,12 +1,12 @@
 # RTC Backend (Rust + Axum)
 
-Backend Rust pour une application type Discord (serveurs, channels, messages, utilisateurs, notifications).
+Rust backend for a Discord-like app (servers, channels, messages, users, notifications).
 
-## Documentation Rust
+## Rust Documentation
 
-- Index global: `src/DOCS.md`
-- Racine Rust: `src/README.md`
-- API REST: `src/api/README.md`
+- Global index: `src/DOCS.md`
+- Rust root: `src/README.md`
+- REST API: `src/api/README.md`
 - Auth: `src/auth/README.md`
 - DB: `src/db/README.md`
 - Models: `src/models/README.md`
@@ -15,43 +15,43 @@ Backend Rust pour une application type Discord (serveurs, channels, messages, ut
 
 ## Architecture
 
-- axum pour l'API REST + WebSocket
-- tokio pour l'async
-- PostgreSQL avec sqlx (migrations integrees)
-- JWT pour l'authentification
-- tower + tower-http pour middlewares (tracing, CORS)
-- serde pour la serialisation
-- tracing pour les logs
+- axum for REST API + WebSocket
+- tokio for async runtime
+- PostgreSQL with sqlx (built-in migrations)
+- JWT for authentication
+- tower + tower-http for middlewares (tracing, CORS)
+- serde for serialization
+- tracing for logs
 
-Structure (principale) :
+Main structure:
 
 ```
 src/
-  api/        # endpoints REST
+  api/        # REST endpoints
   auth/       # JWT + auth middleware
-  db/         # requetes SQL
-  models/     # entites
-  utils/      # helpers/erreurs/validation
+  db/         # SQL queries
+  models/     # entities
+  utils/      # helpers/errors/validation
   ws/         # WebSocket
   state.rs    # AppState
 ```
 
 ## Configuration
 
-Variables d'environnement :
+Environment variables:
 
 - DATABASE_URL (ex: postgres://postgres:postgres@localhost:5432/rtc)
-- JWT_SECRET (cle secrete pour les tokens)
+- JWT_SECRET (secret key for tokens)
 - JWT_EXP_SECONDS (ex: 604800)
 - BIND_ADDR (ex: 0.0.0.0:3000)
 
-## Lancer le serveur
+## Run the server
 
 ```bash
 cargo run
 ```
 
-Migrations SQL automatiquement au demarrage via sqlx::migrate!().
+SQL migrations run automatically at startup via sqlx::migrate!().
 
 ## Tests
 
@@ -59,7 +59,7 @@ Migrations SQL automatiquement au demarrage via sqlx::migrate!().
 cargo test
 ```
 
-## Endpoints REST (principaux)
+## REST endpoints (main)
 
 ### Auth
 - POST /auth/signup
@@ -92,7 +92,7 @@ cargo test
 - GET /channels/{id}/messages
 - DELETE /messages/{id}
 
-## Exemples de payloads JSON
+## JSON payload examples
 
 ### Signup
 ```json
@@ -114,7 +114,7 @@ cargo test
 ### Create Server
 ```json
 {
-  "name": "Mon Serveur"
+  "name": "My Server"
 }
 ```
 
@@ -151,15 +151,15 @@ cargo test
 
 Endpoint: GET /ws?token=JWT
 
-Le serveur verifie le token JWT avant d'accepter la connexion.
+The server validates the JWT before accepting the connection.
 
-### Messages entrants (client -> serveur)
+### Incoming messages (client -> server)
 
 ```json
 { "type": "JoinChannel", "data": { "channel_id": "UUID" } }
 ```
 ```json
-{ "type": "SendMessage", "data": { "channel_id": "UUID", "content": "Salut" } }
+{ "type": "SendMessage", "data": { "channel_id": "UUID", "content": "Hi" } }
 ```
 ```json
 { "type": "Typing", "data": { "channel_id": "UUID", "is_typing": true } }
@@ -168,7 +168,7 @@ Le serveur verifie le token JWT avant d'accepter la connexion.
 { "type": "SubscribeServer", "data": { "server_id": "UUID" } }
 ```
 
-### Messages sortants (serveur -> client)
+### Outgoing messages (server -> client)
 
 ```json
 { "type": "Message", "data": { "message": { "id": "...", "channel_id": "...", "author_id": "...", "content": "...", "created_at": "..." } } }
@@ -183,13 +183,13 @@ Le serveur verifie le token JWT avant d'accepter la connexion.
 { "type": "Typing", "data": { "channel_id": "UUID", "user_id": "UUID", "is_typing": true } }
 ```
 
-## Permissions (resume)
+## Permissions (summary)
 
-- Member: lire/ecrire messages, voir membres, statut en ligne/typing
-- Admin: tout ce que Member + creer/supprimer/editer channels, supprimer messages d'autres users, creer invitations
-- Owner: tout ce que Admin + gerer roles, transferer ownership, supprimer serveur
+- Member: read/write messages, view members, online/typing status
+- Admin: all Member + create/delete/edit channels, delete others' messages, create invites
+- Owner: all Admin + manage roles, transfer ownership, delete server
 
 ## Notes
 
-- Les messages sont persistes et recuperables via GET /channels/{id}/messages.
-- Le statut en ligne est maintenu en memoire (WebSocket) et expose via GET /servers/{id}/members.
+- Messages are persisted and can be retrieved via GET /channels/{id}/messages.
+- Online status is kept in memory (WebSocket) and exposed via GET /servers/{id}/members.

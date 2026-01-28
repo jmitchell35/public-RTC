@@ -1,100 +1,228 @@
 # API - src/api
 
-Handlers HTTP REST (Axum) et definition des routes.
+HTTP REST handlers (Axum) and route definitions. Each file below is documented in detail.
 
-## Fichiers
-- mod.rs : assemble les routes publiques (auth + health) et protegees (middleware JWT + routes servers/channels/messages).
-- auth.rs : endpoints signup/login/logout/me, validation d'entree, emission de JWT, revocation de token.
-- servers.rs : CRUD serveurs, rejoindre/quitter, membres, roles, invitations.
-- channels.rs : CRUD channels par serveur, controle des roles.
-- messages.rs : envoi/liste/suppression de messages, broadcast WS des events.
+## mod.rs
+**Summary**
+Assembles public and protected routes. Applies JWT middleware to protected routes.
 
-## Endpoints et payloads
+**Functions**
+- `router(state: AppState) -> Router<AppState>`
+- `health() -> &'static str`
 
-### auth.rs
-- POST /auth/signup
-  - Body: { "username": String, "email": String, "password": String }
-  - Reponse: { "token": String, "user": UserPublic }
-- POST /auth/login
-  - Body: { "identifier": String, "password": String }
-  - Reponse: { "token": String, "user": UserPublic }
-- POST /auth/logout
-  - Auth: Bearer JWT
-  - Reponse: 204 No Content
-- GET /me
-  - Auth: Bearer JWT
-  - Reponse: { "user": UserPublic }
+**Behaviors**
+- Public routes:
+  - `POST /auth/signup`
+  - `POST /auth/login`
+  - `GET /health`
+- Protected routes (JWT middleware):
+  - `GET /me`
+  - `POST /auth/logout`
+  - all `servers`, `channels`, `messages` routes
 
-### servers.rs
-- POST /servers
-  - Auth: Bearer JWT
-  - Body: { "name": String }
-  - Reponse: { "server": Server }
-- GET /servers
-  - Auth: Bearer JWT
-  - Reponse: { "servers": [Server] }
-- GET /servers/:id
-  - Auth: Bearer JWT (membre)
-  - Reponse: { "server": Server }
-- GET /server/:id
-  - Alias de /servers/:id
-- PUT /servers/:id
-  - Auth: Bearer JWT (owner)
-  - Body: { "name": String }
-  - Reponse: { "server": Server }
-- DELETE /servers/:id
-  - Auth: Bearer JWT (owner)
-  - Reponse: 204 No Content
-- POST /servers/:id/join
-  - Auth: Bearer JWT
-  - Body: { "invite_code": String }
-  - Reponse: 204 No Content
-- POST /invites/:code/join
-  - Auth: Bearer JWT
-  - Reponse: 204 No Content
-- DELETE /servers/:id/leave
-  - Auth: Bearer JWT (non owner)
-  - Reponse: 204 No Content
-- GET /servers/:id/members
-  - Auth: Bearer JWT (membre)
-  - Reponse: { "members": [MemberWithUser] }
-- PUT /servers/:id/members/:user_id
-  - Auth: Bearer JWT (owner)
-  - Body: { "role": "owner" | "admin" | "member" }
-  - Reponse: 204 No Content
-- POST /servers/:id/invites
-  - Auth: Bearer JWT (admin+)
-  - Body: { "expires_in_hours"?: i64, "max_uses"?: i32 }
-  - Reponse: { "code": String, "server_id": Uuid, "expires_at": DateTime?, "max_uses": i32?, "uses": i32 }
+**Errors**
+- Middleware returns `401 Unauthorized` if JWT missing/invalid/revoked.
 
-### channels.rs
-- POST /servers/:server_id/channels
-  - Auth: Bearer JWT (admin+)
-  - Body: { "name": String }
-  - Reponse: { "channel": Channel }
-- GET /servers/:server_id/channels
-  - Auth: Bearer JWT (membre)
-  - Reponse: { "channels": [Channel] }
-- GET /channels/:id
-  - Auth: Bearer JWT (membre)
-  - Reponse: { "channel": Channel }
-- PUT /channels/:id
-  - Auth: Bearer JWT (admin+)
-  - Body: { "name": String }
-  - Reponse: { "channel": Channel }
-- DELETE /channels/:id
-  - Auth: Bearer JWT (admin+)
-  - Reponse: 204 No Content
+**Example**
+```bash
+curl http://localhost:3000/health
+```
 
-### messages.rs
-- POST /channels/:id/messages
-  - Auth: Bearer JWT (membre)
-  - Body: { "content": String }
-  - Reponse: { "message": Message }
-- GET /channels/:id/messages
-  - Auth: Bearer JWT (membre)
-  - Query: ?limit=i64&offset=i64
-  - Reponse: { "messages": [Message] }
-- DELETE /messages/:id
-  - Auth: Bearer JWT (auteur ou admin)
-  - Reponse: 204 No Content
+## auth.rs
+**Summary**
+Signup, login, logout, and current-user retrieval.
+
+**Structures**
+- `SignupRequest { username, email, password }`
+- `LoginRequest { identifier, password }`
+- `AuthResponse { token, user }`
+- `MeResponse { user }`
+
+**Functions**
+- `routes() -> Router<AppState>`
+- `signup(State, Json<SignupRequest>) -> ApiResult<AuthResponse>`
+- `login(State, Json<LoginRequest>) -> ApiResult<AuthResponse>`
+- `logout(State, HeaderMap, Extension<AuthUser>) -> Result<StatusCode, ApiError>`
+- `me(State, Extension<AuthUser>) -> ApiResult<MeResponse>`
+- `SignupRequest::validate() -> bool`
+
+**Behaviors**
+- `signup`:
+  - validates username and password (length),
+  - hashes password (Argon2),
+  - creates user in DB,
+  - returns JWT + `UserPublic`.
+- `login`:
+  - finds user by email or username,
+  - verifies password,
+  - returns JWT + `UserPublic`.
+- `logout`:
+  - extracts Bearer token,
+  - decodes JWT,
+  - stores `jti` in `revoked_tokens`.
+- `me`:
+  - returns current user (DB).
+
+**Errors**
+- `signup`:
+  - `400 BadRequest` if username/password invalid,
+  - `409 Conflict` if email/username already exists (unique violation),
+  - `500 Internal` for DB errors.
+- `login`:
+  - `401 Unauthorized` if unknown identifier or wrong password,
+  - `500 Internal` for DB errors.
+- `logout`:
+  - `401 Unauthorized` if token missing/invalid,
+  - `500 Internal` for DB errors.
+- `me`:
+  - `404 NotFound` if user missing,
+  - `500 Internal` for DB errors.
+
+**Examples**
+```json
+// POST /auth/signup
+{ "username": "alice", "email": "alice@example.com", "password": "super_secret" }
+```
+```json
+// POST /auth/login
+{ "identifier": "alice@example.com", "password": "super_secret" }
+```
+
+## servers.rs
+**Summary**
+Server management (create/list/get/update/delete) + members + roles + invites + join/leave.
+
+**Structures**
+- `CreateServerRequest { name }`
+- `UpdateServerRequest { name }`
+- `JoinServerRequest { invite_code: Option<String> }`
+- `UpdateMemberRoleRequest { role: Role }`
+- `CreateInviteRequest { expires_in_hours?: i64, max_uses?: i32 }`
+- `ServerResponse { server }`
+- `ServersResponse { servers }`
+- `MembersResponse { members: Vec<MemberWithUser> }`
+- `InviteResponse { code, server_id, expires_at?, max_uses?, uses }`
+
+**Functions**
+- `routes() -> Router<AppState>`
+- `create_server(...) -> ApiResult<ServerResponse>`
+- `list_servers(...) -> ApiResult<ServersResponse>`
+- `get_server(...) -> ApiResult<ServerResponse>`
+- `update_server(...) -> ApiResult<ServerResponse>`
+- `delete_server(...) -> Result<StatusCode, ApiError>`
+- `join_server(...) -> Result<StatusCode, ApiError>`
+- `join_by_invite(...) -> Result<StatusCode, ApiError>`
+- `leave_server(...) -> Result<StatusCode, ApiError>`
+- `list_members(...) -> ApiResult<MembersResponse>`
+- `update_member_role(...) -> Result<StatusCode, ApiError>`
+- `create_invite(...) -> ApiResult<InviteResponse>`
+- `ensure_member(...) -> Result<Role, ApiError>`
+- `ensure_role(...) -> Result<Role, ApiError>`
+
+**Behaviors**
+- `create_server` creates a server + owner + "general" channel (DB transaction).
+- `get_server` requires the user to be a member.
+- `update_server` and `delete_server` require role `Owner`.
+- `join_server` and `join_by_invite` consume an invite and add the user as `Member`.
+- `leave_server` prevents the owner from leaving.
+- `list_members` also returns online status via `PresenceState`.
+- `update_member_role` supports ownership transfer.
+- `create_invite` supports expiration and max_uses.
+
+**Errors**
+- Access:
+  - `401 Unauthorized` if JWT missing/invalid.
+  - `403 Forbidden` if not a member or insufficient role.
+- Validation:
+  - `400 BadRequest` if name invalid or invite missing/invalid.
+- Conflict:
+  - `409 Conflict` if already a member.
+- DB:
+  - `404 NotFound` if server or member missing.
+  - `500 Internal` for SQL errors.
+
+**Examples**
+```json
+// POST /servers
+{ "name": "My Server" }
+```
+```json
+// POST /servers/:id/invites
+{ "expires_in_hours": 24, "max_uses": 5 }
+```
+
+## channels.rs
+**Summary**
+Channel CRUD with role checks.
+
+**Structures**
+- `CreateChannelRequest { name }`
+- `UpdateChannelRequest { name }`
+- `ChannelResponse { channel }`
+- `ChannelsResponse { channels }`
+
+**Functions**
+- `routes() -> Router<AppState>`
+- `create_channel(...) -> ApiResult<ChannelResponse>`
+- `list_channels(...) -> ApiResult<ChannelsResponse>`
+- `get_channel(...) -> ApiResult<ChannelResponse>`
+- `update_channel(...) -> ApiResult<ChannelResponse>`
+- `delete_channel(...) -> Result<StatusCode, ApiError>`
+- `ensure_role(...) -> Result<Role, ApiError>`
+
+**Behaviors**
+- `create/update/delete` require `Admin`.
+- `list/get` require `Member`.
+- Validates channel name length.
+
+**Errors**
+- `400 BadRequest` if name invalid.
+- `403 Forbidden` if role insufficient.
+- `404 NotFound` if channel/server not found.
+- `500 Internal` for SQL errors.
+
+**Examples**
+```json
+// POST /servers/:server_id/channels
+{ "name": "general" }
+```
+
+## messages.rs
+**Summary**
+Send/list/delete messages. Broadcasts WS events on send.
+
+**Structures**
+- `SendMessageRequest { content }`
+- `MessageResponse { message }`
+- `MessagesResponse { messages }`
+- `Pagination { limit?: i64, offset?: i64 }`
+
+**Functions**
+- `routes() -> Router<AppState>`
+- `send_message(...) -> ApiResult<MessageResponse>`
+- `list_messages(...) -> ApiResult<MessagesResponse>`
+- `delete_message(...) -> Result<StatusCode, ApiError>`
+
+**Behaviors**
+- `send_message`:
+  - rejects empty content,
+  - checks `Member` role,
+  - creates message,
+  - broadcasts to channel + server notification.
+- `list_messages`:
+  - pagination (limit 1..100, offset >= 0),
+  - order by created_at DESC.
+- `delete_message`:
+  - allowed for author or `Admin`.
+
+**Errors**
+- `400 BadRequest` if content empty.
+- `403 Forbidden` if role insufficient.
+- `404 NotFound` if channel/message missing.
+- `500 Internal` for SQL errors.
+
+**Examples**
+```json
+// POST /channels/:id/messages
+{ "content": "Hello world" }
+```

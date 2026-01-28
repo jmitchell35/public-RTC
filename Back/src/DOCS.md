@@ -1,15 +1,15 @@
-# Index documentation Rust
+# Rust documentation index
 
-## Entrees principales
-- `README.md` : vue d'ensemble du dossier src.
-- `api/README.md` : API REST, routes et payloads.
-- `auth/README.md` : JWT, hash mot de passe, middleware.
-- `db/README.md` : acces base SQLx et migrations.
-- `models/README.md` : structures et types partages.
-- `utils/README.md` : config, erreurs, validation.
+## Main entries
+- `README.md` : overview of the src folder.
+- `api/README.md` : REST API, routes, and payloads.
+- `auth/README.md` : JWT, password hashing, middleware.
+- `db/README.md` : SQLx access layer and migrations.
+- `models/README.md` : shared structures and types.
+- `utils/README.md` : config, errors, validation.
 - `ws/README.md` : WebSocket, events, presence.
 
-## Fichiers racine (src/)
+## Root files (src/)
 - `lib.rs`
 - `main.rs`
 - `state.rs`
