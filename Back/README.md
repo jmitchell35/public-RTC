@@ -2,6 +2,17 @@
 
 Backend Rust pour une application type Discord (serveurs, channels, messages, utilisateurs, notifications).
 
+## Documentation Rust
+
+- Index global: `src/DOCS.mdr`
+- Racine Rust: `src/README.mdr`
+- API REST: `src/api/README.mdr`
+- Auth: `src/auth/README.mdr`
+- DB: `src/db/README.mdr`
+- Models: `src/models/README.mdr`
+- Utils: `src/utils/README.mdr`
+- WebSocket: `src/ws/README.mdr`
+
 ## Architecture
 
 - axum pour l'API REST + WebSocket
