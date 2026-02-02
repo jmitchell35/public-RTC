@@ -45,6 +45,11 @@ Environment variables:
 - JWT_EXP_SECONDS (ex: 604800)
 - BIND_ADDR (ex: 0.0.0.0:3000)
 
+Railway DB URLs:
+
+- Public URL: `postgresql://postgres:tozqVSFCAKJWQbDoGkpRbYDryednOTDj@nozomi.proxy.rlwy.net:19714/railway`
+- Internal URL: `postgresql://postgres:tozqVSFCAKJWQbDoGkpRbYDryednOTDj@postgres.railway.internal:5432/railway`
+
 ## Run the server
 
 ```bash
