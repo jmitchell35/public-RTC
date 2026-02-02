@@ -261,3 +261,236 @@ fn subscribe_server(
     let task = spawn_forwarder(rx, out_tx.clone());
     tasks.insert(server_id, task);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        auth::{hash_password, JwtConfig},
+        db,
+        state::AppState,
+    };
+    use sqlx::PgPool;
+    use std::time::Duration;
+
+    async fn setup_state() -> (AppState, PgPool) {
+        dotenvy::dotenv().ok();
+        let base_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must be set for WS handler tests");
+
+        let schema = format!("test_{}", Uuid::new_v4().to_string().replace('-', "_"));
+        let admin_pool = PgPool::connect(&base_url).await.expect("connect admin pool");
+        sqlx::query(&format!("CREATE SCHEMA {}", schema))
+            .execute(&admin_pool)
+            .await
+            .expect("create schema");
+
+        let url_with_schema = with_search_path(&base_url, &schema);
+        let pool = PgPool::connect(&url_with_schema).await.expect("connect test pool");
+        db::run_migrations(&pool).await.expect("run migrations");
+
+        let jwt = JwtConfig::new("test-secret".to_string(), 3600);
+        let state = AppState::new(pool.clone(), jwt);
+        (state, pool)
+    }
+
+    fn with_search_path(base: &str, schema: &str) -> String {
+        let sep = if base.contains('?') { '&' } else { '?' };
+        format!("{base}{sep}options=-c%20search_path%3D{schema}")
+    }
+
+    async fn create_user(pool: &PgPool, username: &str, email: &str) -> crate::models::User {
+        let hash = hash_password("super_secret").expect("hash password");
+        db::users::create(pool, username, email, &hash)
+            .await
+            .expect("create user")
+    }
+
+    async fn create_server_and_channel(
+        pool: &PgPool,
+        owner_id: Uuid,
+    ) -> (crate::models::Server, crate::models::Channel) {
+        let server = db::servers::create(pool, "Test Server", owner_id)
+            .await
+            .expect("create server");
+        let channels = db::channels::list_for_server(pool, server.id)
+            .await
+            .expect("list channels");
+        let channel = channels.first().expect("default channel").clone();
+        (server, channel)
+    }
+
+    async fn recv_event(rx: &mut mpsc::UnboundedReceiver<WsEvent>) -> WsEvent {
+        tokio::time::timeout(Duration::from_secs(5), rx.recv())
+            .await
+            .expect("timeout")
+            .expect("ws event")
+    }
+
+    #[tokio::test]
+    async fn join_channel_and_send_message_emits_message_event() {
+        let (state, pool) = setup_state().await;
+        let user = create_user(&pool, "alice", "alice@example.com").await;
+        let (_server, channel) = create_server_and_channel(&pool, user.id).await;
+
+        let (out_tx, mut out_rx) = mpsc::unbounded_channel::<WsEvent>();
+        let mut server_tasks = HashMap::new();
+        let mut channel_tasks = HashMap::new();
+        let mut subscribed_channels = HashSet::new();
+
+        handle_inbound(
+            WsInbound::JoinChannel { channel_id: channel.id },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        handle_inbound(
+            WsInbound::SendMessage {
+                channel_id: channel.id,
+                content: "hello".to_string(),
+            },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        let event = recv_event(&mut out_rx).await;
+        match event {
+            WsEvent::Message { message } => assert_eq!(message.content, "hello"),
+            other => panic!("expected Message, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn typing_emits_typing_event() {
+        let (state, pool) = setup_state().await;
+        let user = create_user(&pool, "alice", "alice@example.com").await;
+        let (_server, channel) = create_server_and_channel(&pool, user.id).await;
+
+        let (out_tx, mut out_rx) = mpsc::unbounded_channel::<WsEvent>();
+        let mut server_tasks = HashMap::new();
+        let mut channel_tasks = HashMap::new();
+        let mut subscribed_channels = HashSet::new();
+
+        handle_inbound(
+            WsInbound::JoinChannel { channel_id: channel.id },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        handle_inbound(
+            WsInbound::Typing {
+                channel_id: channel.id,
+                is_typing: true,
+            },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        let event = recv_event(&mut out_rx).await;
+        match event {
+            WsEvent::Typing { channel_id, is_typing, user_id } => {
+                assert_eq!(channel_id, channel.id);
+                assert_eq!(user_id, user.id);
+                assert!(is_typing);
+            }
+            other => panic!("expected Typing, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn send_message_rejects_empty_content() {
+        let (state, pool) = setup_state().await;
+        let user = create_user(&pool, "alice", "alice@example.com").await;
+        let (_server, channel) = create_server_and_channel(&pool, user.id).await;
+
+        let (out_tx, mut out_rx) = mpsc::unbounded_channel::<WsEvent>();
+        let mut server_tasks = HashMap::new();
+        let mut channel_tasks = HashMap::new();
+        let mut subscribed_channels = HashSet::new();
+
+        handle_inbound(
+            WsInbound::JoinChannel { channel_id: channel.id },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        handle_inbound(
+            WsInbound::SendMessage {
+                channel_id: channel.id,
+                content: "   ".to_string(),
+            },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        let maybe_event = tokio::time::timeout(Duration::from_millis(200), out_rx.recv()).await;
+        assert!(maybe_event.is_err(), "no event should be emitted");
+    }
+
+    #[tokio::test]
+    async fn subscribe_server_receives_notification() {
+        let (state, pool) = setup_state().await;
+        let user = create_user(&pool, "alice", "alice@example.com").await;
+        let (server, _channel) = create_server_and_channel(&pool, user.id).await;
+
+        let (out_tx, mut out_rx) = mpsc::unbounded_channel::<WsEvent>();
+        let mut server_tasks = HashMap::new();
+        let mut channel_tasks = HashMap::new();
+        let mut subscribed_channels = HashSet::new();
+
+        handle_inbound(
+            WsInbound::SubscribeServer { server_id: server.id },
+            &state,
+            user.id,
+            &out_tx,
+            &mut server_tasks,
+            &mut channel_tasks,
+            &mut subscribed_channels,
+        )
+        .await;
+
+        state.ws_hub.broadcast_server(
+            server.id,
+            WsEvent::Notification {
+                server_id: server.id,
+                content: "test".to_string(),
+            },
+        );
+
+        let event = recv_event(&mut out_rx).await;
+        match event {
+            WsEvent::Notification { content, .. } => assert_eq!(content, "test"),
+            other => panic!("expected Notification, got {other:?}"),
+        }
+    }
+}
