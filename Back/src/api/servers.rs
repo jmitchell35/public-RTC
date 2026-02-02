@@ -63,14 +63,14 @@ pub struct InviteResponse {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/servers", post(create_server).get(list_servers))
-        .route("/servers/:id", get(get_server).put(update_server).delete(delete_server))
-        .route("/server/:id", get(get_server))
-        .route("/servers/:id/join", post(join_server))
-        .route("/servers/:id/leave", delete(leave_server))
-        .route("/servers/:id/members", get(list_members))
-        .route("/servers/:id/members/:user_id", put(update_member_role))
-        .route("/servers/:id/invites", post(create_invite))
-        .route("/invites/:code/join", post(join_by_invite))
+        .route("/servers/{id}", get(get_server).put(update_server).delete(delete_server))
+        .route("/server/{id}", get(get_server))
+        .route("/servers/{id}/join", post(join_server))
+        .route("/servers/{id}/leave", delete(leave_server))
+        .route("/servers/{id}/members", get(list_members))
+        .route("/servers/{id}/members/{user_id}", put(update_member_role))
+        .route("/servers/{id}/invites", post(create_invite))
+        .route("/invites/{code}/join", post(join_by_invite))
 }
 
 pub async fn create_server(

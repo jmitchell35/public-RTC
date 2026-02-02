@@ -33,8 +33,8 @@ pub struct Pagination {
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/channels/:id/messages", post(send_message).get(list_messages))
-        .route("/messages/:id", delete(delete_message))
+        .route("/channels/{id}/messages", post(send_message).get(list_messages))
+        .route("/messages/{id}", delete(delete_message))
 }
 
 pub async fn send_message(

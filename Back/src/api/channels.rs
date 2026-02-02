@@ -32,10 +32,10 @@ pub struct ChannelsResponse {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/servers/:server_id/channels",
+            "/servers/{server_id}/channels",
             post(create_channel).get(list_channels),
         )
-        .route("/channels/:id", get(get_channel).put(update_channel).delete(delete_channel))
+        .route("/channels/{id}", get(get_channel).put(update_channel).delete(delete_channel))
 }
 
 pub async fn create_channel(
