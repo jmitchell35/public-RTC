@@ -9,5 +9,20 @@
     "jetbrains" : {
       "backend" : "WebStorm"
     }
-  }
+  },
+  "features": {
+    // Install Git in container
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "mounts": [
+    // Mount host home to avoid bind-mounting .gitconfig directly (git uses rename)
+    "source=${localEnv:HOME},target=/home/node-host,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh,type=bind"
+  ],
+  "containerEnv": {
+    "GIT_CONFIG_GLOBAL": "/home/node-host/.gitconfig"
+  },
+  // Mount parent directory to access .git
+  "workspaceMount": "source=${localWorkspaceFolder}/..,target=/workspace,type=bind",
+  "workspaceFolder": "/workspace/Front"
 }
