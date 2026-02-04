@@ -55,6 +55,8 @@ pub struct Message {
     pub author_id: UserId,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub edited_at: Option<DateTime<Utc>>,
+    pub pinned: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -66,6 +68,14 @@ pub struct Invite {
     pub expires_at: Option<DateTime<Utc>>,
     pub max_uses: Option<i32>,
     pub uses: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct MessageReaction {
+    pub message_id: MessageId,
+    pub user_id: UserId,
+    pub emoji: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

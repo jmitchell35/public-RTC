@@ -10,10 +10,14 @@ pub mod handler;
 #[serde(tag = "type", content = "data")]
 pub enum WsEvent {
     Message { message: Message },
+    MessageUpdated { message: Message },
     UserConnected { server_id: Uuid, user: UserPublic },
     UserDisconnected { server_id: Uuid, user_id: Uuid },
     Typing { channel_id: Uuid, user_id: Uuid, is_typing: bool },
     Notification { server_id: Uuid, content: String },
+    MessagePinned { message_id: Uuid, pinned: bool },
+    ReactionAdded { message_id: Uuid, reaction: crate::models::MessageReaction },
+    ReactionRemoved { message_id: Uuid, user_id: Uuid, emoji: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

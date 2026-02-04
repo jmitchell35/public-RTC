@@ -101,9 +101,13 @@ Create, list, and delete messages.
 - `list_for_channel(pool, channel_id, limit, offset) -> Result<Vec<Message>, ApiError>`
 - `get_by_id(pool, message_id) -> Result<Option<Message>, ApiError>`
 - `delete(pool, message_id) -> Result<(), ApiError>`
+- `update_content(pool, message_id, content) -> Result<Option<Message>, ApiError>`
+- `set_pinned(pool, message_id, pinned) -> Result<Option<Message>, ApiError>`
 
 **Behaviors**
 - `list_for_channel` returns messages ordered DESC (most recent first).
+- `update_content` sets `edited_at` to now.
+- `set_pinned` toggles the `pinned` flag.
 
 **Errors**
 - `ApiError::Internal` for SQLx errors.
@@ -111,6 +115,23 @@ Create, list, and delete messages.
 **Example**
 ```rust
 let msgs = messages::list_for_channel(&pool, channel_id, 50, 0).await?;
+```
+
+## reactions.rs
+**Summary**
+Message reactions (emoji) per user.
+
+**Functions**
+- `add(pool, message_id, user_id, emoji) -> Result<MessageReaction, ApiError>`
+- `remove(pool, message_id, user_id, emoji) -> Result<(), ApiError>`
+- `list_for_message(pool, message_id) -> Result<Vec<MessageReaction>, ApiError>`
+
+**Behaviors**
+- Unique per `(message_id, user_id, emoji)`.
+
+**Example**
+```rust
+let reactions = reactions::list_for_message(&pool, message_id).await?;
 ```
 
 ## members.rs

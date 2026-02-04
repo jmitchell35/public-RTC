@@ -9,10 +9,14 @@ Defines the WS schema (incoming/outgoing), the broadcast hub, and presence state
 **Enums**
 - `WsEvent` (server -> client):
   - `Message { message }`
+  - `MessageUpdated { message }`
   - `UserConnected { server_id, user }`
   - `UserDisconnected { server_id, user_id }`
   - `Typing { channel_id, user_id, is_typing }`
   - `Notification { server_id, content }`
+  - `MessagePinned { message_id, pinned }`
+  - `ReactionAdded { message_id, reaction }`
+  - `ReactionRemoved { message_id, user_id, emoji }`
 - `WsInbound` (client -> server):
   - `JoinChannel { channel_id }`
   - `LeaveChannel { channel_id }`

@@ -193,8 +193,11 @@ Send/list/delete messages. Broadcasts WS events on send.
 
 **Structures**
 - `SendMessageRequest { content }`
+- `EditMessageRequest { content }`
+- `ReactionRequest { emoji }`
 - `MessageResponse { message }`
 - `MessagesResponse { messages }`
+- `ReactionsResponse { reactions }`
 - `Pagination { limit?: i64, offset?: i64 }`
 
 **Functions**
@@ -202,6 +205,12 @@ Send/list/delete messages. Broadcasts WS events on send.
 - `send_message(...) -> ApiResult<MessageResponse>`
 - `list_messages(...) -> ApiResult<MessagesResponse>`
 - `delete_message(...) -> Result<StatusCode, ApiError>`
+- `edit_message(...) -> ApiResult<MessageResponse>`
+- `pin_message(...) -> ApiResult<MessageResponse>`
+- `unpin_message(...) -> ApiResult<MessageResponse>`
+- `add_reaction(...) -> ApiResult<ReactionsResponse>`
+- `remove_reaction(...) -> ApiResult<ReactionsResponse>`
+- `list_reactions(...) -> ApiResult<ReactionsResponse>`
 
 **Behaviors**
 - `send_message`:
@@ -214,6 +223,13 @@ Send/list/delete messages. Broadcasts WS events on send.
   - order by created_at DESC.
 - `delete_message`:
   - allowed for author or `Admin`.
+- `edit_message`:
+  - allowed for author or `Admin`,
+  - sets `edited_at`.
+- `pin_message` / `unpin_message`:
+  - `Admin+` only, toggles `pinned`.
+- `add_reaction` / `remove_reaction` / `list_reactions`:
+  - `Member` only, manages emoji reactions for a message.
 
 **Errors**
 - `400 BadRequest` if content empty.

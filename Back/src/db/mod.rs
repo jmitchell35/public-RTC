@@ -4,6 +4,7 @@ pub mod channels;
 pub mod invites;
 pub mod members;
 pub mod messages;
+pub mod reactions;
 pub mod servers;
 pub mod tokens;
 pub mod users;

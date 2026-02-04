@@ -17,10 +17,11 @@ Defines ID types, model structs, and the `Role` enum.
 - `UserPublic { id, username }`
 - `Server { id, name, owner_id, created_at }`
 - `Channel { id, server_id, name, created_at }`
-- `Message { id, channel_id, author_id, content, created_at }`
+- `Message { id, channel_id, author_id, content, created_at, edited_at?, pinned }`
 - `Invite { code, server_id, created_by, created_at, expires_at?, max_uses?, uses }`
 - `ServerMember { server_id, user_id, role, joined_at }`
 - `MemberWithUser { user_id, username, role, online }`
+- `MessageReaction { message_id, user_id, emoji, created_at }`
 
 **Enum**
 - `Role::Owner | Role::Admin | Role::Member`

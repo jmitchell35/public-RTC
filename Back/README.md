@@ -96,6 +96,12 @@ cargo test
 - POST /channels/{id}/messages
 - GET /channels/{id}/messages
 - DELETE /messages/{id}
+- PUT /messages/{id} (edit)
+- POST /messages/{id}/pin
+- DELETE /messages/{id}/pin
+- POST /messages/{id}/reactions
+- GET /messages/{id}/reactions
+- DELETE /messages/{id}/reactions
 
 ## JSON payload examples
 
