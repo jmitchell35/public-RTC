@@ -35,8 +35,16 @@
 
 	// Configure tool-specific properties.
   "containerEnv": {
-    "GIT_CONFIG_GLOBAL": "/home/vscode-host/.gitconfig"
+    "GIT_CONFIG_GLOBAL": "/home/vscode-host/.gitconfig",
+    "BIND_ADDR": "0.0.0.0:3001"
   },
+  "runArgs": [
+    "-p",
+    "3001:3001"
+  ],
+  "forwardPorts": [
+    3001
+  ],
   "customizations" : {
     "jetbrains" : {
       "backend" : "RustRover"
