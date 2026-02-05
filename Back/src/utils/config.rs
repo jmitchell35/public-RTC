@@ -12,14 +12,14 @@ impl Config {
     pub fn from_env() -> Self {
         dotenvy::dotenv().ok();
         let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgresql://postgres:tozqVSFCAKJWQbDoGkpRbYDryednOTDj@nozomi.proxy.rlwy.net:19714/railway".to_string()
+            "postgresql://postgres:postgres@localhost:5432/rtc".to_string()
         });
         let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret".to_string());
         let jwt_exp_seconds = env::var("JWT_EXP_SECONDS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(60 * 60 * 24 * 7);
-        let bind_addr = env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:3000".to_string());
+        let bind_addr = env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:3001".to_string());
         Self {
             database_url,
             jwt_secret,
