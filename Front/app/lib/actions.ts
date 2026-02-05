@@ -1,9 +1,9 @@
 'use server';
 
-// form data validation library
-import {z} from 'zod';
-import {revalidatePath} from 'next/cache';
+import { z } from 'zod';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { fetchBackend } from './backend';
 
 // Schema to match data against
 // const FormSchema = z.object({
@@ -32,22 +32,69 @@ import { redirect } from 'next/navigation';
 // const CreateInvoice = FormSchema.omit({id: true, date: true});
 // const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 
+const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    redirectTo: z.string().optional(),
+});
+
+type LoginResponse = {
+    token: string;
+};
+
 export async function authenticate(
-    prevState: string | undefined,
+    _prevState: string | undefined,
     formData: FormData,
 ) {
-    return "ok";
-    // try {
-    //     await signIn('credentials', formData);
-    // } catch (error) {
-    //     if (error instanceof AuthError) {
-    //         switch (error.type) {
-    //             case 'CredentialsSignin':
-    //                 return 'Invalid credentials.';
-    //             default:
-    //                 return 'Something went wrong.';
-    //         }
-    //     }
-    //     throw error;
-    // }
+    const parsed = loginSchema.safeParse({
+        email: formData.get('email'),
+        password: formData.get('password'),
+        redirectTo: formData.get('redirectTo'),
+    });
+
+    if (!parsed.success) {
+        return 'Invalid credentials.';
+    }
+
+    let response: Response;
+    try {
+        const result = await fetchBackend('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                identifier: parsed.data.email,
+                password: parsed.data.password,
+            }),
+            cache: 'no-store',
+        });
+        response = result.response;
+    } catch (error) {
+        console.error('Auth login failed to reach backend', error);
+        return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+    }
+
+    if (!response.ok) {
+        if (response.status === 401) {
+            return 'Invalid credentials.';
+        }
+        if (response.status === 404) {
+            return 'Backend not found. Check BACKEND_URL.';
+        }
+        return 'Something went wrong.';
+    }
+
+    const data = (await response.json()) as LoginResponse;
+    if (!data?.token) {
+        return 'Something went wrong.';
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set('auth_token', data.token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+    });
+
+    redirect(parsed.data.redirectTo || '/dashboard');
 }

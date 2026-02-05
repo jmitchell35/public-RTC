@@ -1,1 +1,8 @@
 .idea
+.env
+.env.*
+!.env.example
+!.env.local.example
+Front/.next/
+Front/node_modules/
+Back/target/
