@@ -1,9 +1,35 @@
+import fs from 'node:fs';
+
 const FALLBACK_URLS = [
     'http://host.docker.internal:3001',
     'http://172.17.0.1:3001',
     'http://127.0.0.1:3001',
     'http://localhost:3001',
 ];
+
+function getWslHostUrl() {
+    const isWsl =
+        Boolean(process.env.WSL_DISTRO_NAME) ||
+        (fs.existsSync('/proc/version') &&
+            fs
+                .readFileSync('/proc/version', 'utf8')
+                .toLowerCase()
+                .includes('microsoft'));
+    if (!isWsl) {
+        return '';
+    }
+
+    try {
+        const content = fs.readFileSync('/etc/resolv.conf', 'utf8');
+        const match = content.match(/^nameserver\s+([0-9.]+)/m);
+        if (!match) {
+            return '';
+        }
+        return `http://${match[1]}:3001`;
+    } catch {
+        return '';
+    }
+}
 
 function normalizeUrl(raw: string) {
     try {
@@ -20,6 +46,7 @@ function normalizeUrl(raw: string) {
 function getBackendCandidates() {
     const envValue =
         process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
+    const wslHost = normalizeUrl(getWslHostUrl());
     const envUrls = envValue
         .split(',')
         .map((item) => item.trim())
@@ -35,7 +62,10 @@ function getBackendCandidates() {
         });
 
     const fallbackUrls = FALLBACK_URLS.map(normalizeUrl).filter(Boolean);
-    return Array.from(new Set([...envUrls, ...fallbackUrls]));
+    const candidates = wslHost
+        ? [wslHost, ...envUrls, ...fallbackUrls]
+        : [...envUrls, ...fallbackUrls];
+    return Array.from(new Set(candidates));
 }
 
 export async function fetchBackend(
@@ -62,5 +92,6 @@ export async function fetchBackend(
         }
     }
 
+    console.error('Backend candidates tried:', candidates);
     throw lastError ?? new Error('Backend unreachable');
 }
