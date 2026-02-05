@@ -11,9 +11,8 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Self {
         dotenvy::dotenv().ok();
-        let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgresql://postgres:postgres@localhost:5432/rtc".to_string()
-        });
+        let database_url = env::var("DATABASE_URL")
+            .expect("DATABASE_URL must be set (Railway PostgreSQL connection string).");
         let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret".to_string());
         let jwt_exp_seconds = env::var("JWT_EXP_SECONDS")
             .ok()

@@ -40,15 +40,13 @@ src/
 
 Environment variables:
 
-- DATABASE_URL (ex: postgres://postgres:postgres@localhost:5432/rtc)
+- DATABASE_URL (Railway PostgreSQL URL, e.g. `postgresql://USER:PASSWORD@HOST:PORT/DB`)
 - JWT_SECRET (secret key for tokens)
 - JWT_EXP_SECONDS (ex: 604800)
-- BIND_ADDR (ex: 0.0.0.0:3000)
+- BIND_ADDR (ex: 0.0.0.0:3001)
 
-Railway DB URLs:
-
-- Public URL: `postgresql://postgres:tozqVSFCAKJWQbDoGkpRbYDryednOTDj@nozomi.proxy.rlwy.net:19714/railway`
-- Internal URL: `postgresql://postgres:tozqVSFCAKJWQbDoGkpRbYDryednOTDj@postgres.railway.internal:5432/railway`
+Railway:
+- Set `DATABASE_URL` from the Railway dashboard.
 
 ## Run the server
 
@@ -57,6 +55,14 @@ cargo run
 ```
 
 SQL migrations run automatically at startup via sqlx::migrate!().
+
+## Local PostgreSQL (Docker)
+
+```bash
+docker compose -f docker-compose.yml up -d
+```
+
+Then set `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rtc` (see `Back/.env.example`).
 
 ## Tests
 
