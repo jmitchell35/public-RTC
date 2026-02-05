@@ -1,5 +1,6 @@
 const FALLBACK_URLS = [
     'http://host.docker.internal:3001',
+    'http://172.17.0.1:3001',
     'http://127.0.0.1:3001',
     'http://localhost:3001',
 ];
