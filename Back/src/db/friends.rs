@@ -17,12 +17,13 @@ pub struct FriendRequestWithUser {
     pub user_id: Uuid,
     pub username: String,
     pub friend_code: String,
+    pub status: String,
     pub created_at: DateTime<Utc>,
 }
 
 pub async fn list_friends(pool: &PgPool, user_id: Uuid) -> Result<Vec<UserPublic>, ApiError> {
     let friends = sqlx::query_as::<_, UserPublic>(
-        r#"SELECT u.id, u.username, u.friend_code
+        r#"SELECT u.id, u.username, u.friend_code, u.status
         FROM friends f
         JOIN users u ON u.id = f.friend_id
         WHERE f.user_id = $1
@@ -39,7 +40,7 @@ pub async fn list_incoming_requests(
     user_id: Uuid,
 ) -> Result<Vec<FriendRequestWithUser>, ApiError> {
     let requests = sqlx::query_as::<_, FriendRequestWithUser>(
-        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, fr.created_at
+        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, u.status, fr.created_at
         FROM friend_requests fr
         JOIN users u ON u.id = fr.requester_id
         WHERE fr.addressee_id = $1
@@ -56,7 +57,7 @@ pub async fn list_outgoing_requests(
     user_id: Uuid,
 ) -> Result<Vec<FriendRequestWithUser>, ApiError> {
     let requests = sqlx::query_as::<_, FriendRequestWithUser>(
-        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, fr.created_at
+        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, u.status, fr.created_at
         FROM friend_requests fr
         JOIN users u ON u.id = fr.addressee_id
         WHERE fr.requester_id = $1

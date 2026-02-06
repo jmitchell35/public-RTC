@@ -13,7 +13,7 @@ pub async fn create(
     let user = sqlx::query_as::<_, User>(
         r#"INSERT INTO users (id, username, email, password_hash, friend_code)
         VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, username, email, password_hash, friend_code, created_at"#,
+        RETURNING id, username, email, password_hash, friend_code, status, created_at"#,
     )
     .bind(user_id)
     .bind(username)
@@ -30,7 +30,7 @@ pub async fn find_by_email_or_username(
     identifier: &str,
 ) -> Result<Option<User>, ApiError> {
     let user = sqlx::query_as::<_, User>(
-        r#"SELECT id, username, email, password_hash, friend_code, created_at
+        r#"SELECT id, username, email, password_hash, friend_code, status, created_at
         FROM users
         WHERE email = $1 OR username = $1"#,
     )
@@ -42,7 +42,7 @@ pub async fn find_by_email_or_username(
 
 pub async fn get_by_id(pool: &PgPool, user_id: Uuid) -> Result<Option<User>, ApiError> {
     let user = sqlx::query_as::<_, User>(
-        r#"SELECT id, username, email, password_hash, friend_code, created_at
+        r#"SELECT id, username, email, password_hash, friend_code, status, created_at
         FROM users
         WHERE id = $1"#,
     )
@@ -57,7 +57,7 @@ pub async fn find_by_friend_code(
     friend_code: &str,
 ) -> Result<Option<User>, ApiError> {
     let user = sqlx::query_as::<_, User>(
-        r#"SELECT id, username, email, password_hash, friend_code, created_at
+        r#"SELECT id, username, email, password_hash, friend_code, status, created_at
         FROM users
         WHERE friend_code = $1"#,
     )
@@ -65,4 +65,21 @@ pub async fn find_by_friend_code(
     .fetch_optional(pool)
     .await?;
     Ok(user)
+}
+
+pub async fn set_status(
+    pool: &PgPool,
+    user_id: Uuid,
+    status: &str,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        r#"UPDATE users
+        SET status = $1
+        WHERE id = $2"#,
+    )
+    .bind(status)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
+    Ok(())
 }

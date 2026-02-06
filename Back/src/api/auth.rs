@@ -21,6 +21,11 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateStatusRequest {
+    pub status: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,
@@ -51,10 +56,16 @@ pub async fn signup(
 
     let hash = hash_password(&payload.password)?;
     let user = db::users::create(&state.db, &payload.username, &payload.email, &hash).await?;
+    db::users::set_status(&state.db, user.id, "online").await?;
     let (token, _) = state.jwt.issue_token(user.id)?;
     Ok(Json(AuthResponse {
         token,
-        user: UserPublic::from(&user),
+        user: UserPublic {
+            id: user.id,
+            username: user.username,
+            friend_code: user.friend_code,
+            status: "online".to_string(),
+        },
     }))
 }
 
@@ -68,10 +79,16 @@ pub async fn login(
     if !verify_password(&payload.password, &user.password_hash)? {
         return Err(ApiError::Unauthorized);
     }
+    db::users::set_status(&state.db, user.id, "online").await?;
     let (token, _) = state.jwt.issue_token(user.id)?;
     Ok(Json(AuthResponse {
         token,
-        user: UserPublic::from(&user),
+        user: UserPublic {
+            id: user.id,
+            username: user.username,
+            friend_code: user.friend_code,
+            status: "online".to_string(),
+        },
     }))
 }
 
@@ -83,6 +100,7 @@ pub async fn logout(
     let token = extract_bearer_token(&headers).ok_or(ApiError::Unauthorized)?;
     let claims = state.jwt.decode_token(&token)?;
     db::tokens::revoke(&state.db, &claims.jti).await?;
+    db::users::set_status(&state.db, claims.sub, "offline").await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -90,6 +108,24 @@ pub async fn me(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> ApiResult<MeResponse> {
+    let user = db::users::get_by_id(&state.db, user.user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    Ok(Json(MeResponse {
+        user: UserPublic::from(&user),
+    }))
+}
+
+pub async fn update_status(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Json(payload): Json<UpdateStatusRequest>,
+) -> ApiResult<MeResponse> {
+    let status = payload.status.trim().to_lowercase();
+    if !validation::validate_user_status(&status) {
+        return Err(ApiError::BadRequest("invalid status".to_string()));
+    }
+    db::users::set_status(&state.db, user.user_id, &status).await?;
     let user = db::users::get_by_id(&state.db, user.user_id)
         .await?
         .ok_or(ApiError::NotFound)?;

@@ -10,6 +10,7 @@ export type UserPublic = {
     id: string;
     username: string;
     friend_code: string;
+    status: string;
 };
 
 export type FriendRequestItem = {
@@ -22,6 +23,10 @@ export type FriendRequestsResponse = {
     incoming: FriendRequestItem[];
     outgoing: FriendRequestItem[];
 };
+
+const statusSchema = z.object({
+    status: z.enum(['online', 'offline', 'dnd']),
+});
 
 const friendRequestSchema = z.object({
     friendCode: z.string().min(6).max(32),
@@ -114,6 +119,7 @@ export async function sendFriendRequest(
     }
 
     revalidatePath('/home');
+    revalidatePath('/home/add');
     return undefined;
 }
 
@@ -136,6 +142,7 @@ export async function acceptFriendRequest(formData: FormData) {
     }
 
     revalidatePath('/home');
+    revalidatePath('/home/add');
 }
 
 export async function rejectFriendRequest(formData: FormData) {
@@ -157,4 +164,34 @@ export async function rejectFriendRequest(formData: FormData) {
     }
 
     revalidatePath('/home');
+    revalidatePath('/home/add');
+}
+
+export async function updateStatus(formData: FormData) {
+    const parsed = statusSchema.safeParse({
+        status: formData.get('status'),
+    });
+
+    if (!parsed.success) {
+        return;
+    }
+
+    try {
+        const response = await authFetch('/me/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: parsed.data.status,
+            }),
+        });
+        if (!response.ok) {
+            return;
+        }
+    } catch (error) {
+        console.error('Status update failed', error);
+        return;
+    }
+
+    revalidatePath('/home');
+    revalidatePath('/home/add');
 }

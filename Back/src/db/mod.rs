@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 
 pub mod channels;
+pub mod direct_messages;
 pub mod friends;
 pub mod invites;
 pub mod members;

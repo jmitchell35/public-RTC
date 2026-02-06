@@ -3,6 +3,7 @@ use axum::{middleware, routing::get, Router};
 
 pub mod auth;
 pub mod channels;
+pub mod dm;
 pub mod friends;
 pub mod messages;
 pub mod servers;
@@ -14,8 +15,10 @@ pub fn router(state: AppState) -> Router<AppState> {
 
     let protected = Router::new()
         .route("/me", get(auth::me))
+        .route("/me/status", axum::routing::post(auth::update_status))
         .route("/auth/logout", axum::routing::post(auth::logout))
         .merge(friends::routes())
+        .merge(dm::routes())
         .merge(servers::routes())
         .merge(channels::routes())
         .merge(messages::routes())

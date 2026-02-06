@@ -15,6 +15,7 @@ pub struct User {
     pub email: String,
     pub password_hash: String,
     pub friend_code: String,
+    pub status: String,
     pub created_at: DateTime<Utc>,
 }
 
@@ -23,6 +24,7 @@ pub struct UserPublic {
     pub id: UserId,
     pub username: String,
     pub friend_code: String,
+    pub status: String,
 }
 
 impl From<&User> for UserPublic {
@@ -31,8 +33,29 @@ impl From<&User> for UserPublic {
             id: user.id,
             username: user.username.clone(),
             friend_code: user.friend_code.clone(),
+            status: user.status.clone(),
         }
     }
+}
+
+pub type DirectConversationId = Uuid;
+pub type DirectMessageId = Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DirectConversation {
+    pub id: DirectConversationId,
+    pub user_a: UserId,
+    pub user_b: UserId,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DirectMessage {
+    pub id: DirectMessageId,
+    pub conversation_id: DirectConversationId,
+    pub author_id: UserId,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

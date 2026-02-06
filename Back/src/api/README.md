@@ -17,12 +17,15 @@ Assembles public and protected routes. Applies JWT middleware to protected route
   - `GET /health`
 - Protected routes (JWT middleware):
   - `GET /me`
+  - `POST /me/status`
   - `POST /auth/logout`
   - `GET /friends`
   - `GET /friends/requests`
   - `POST /friends/requests`
   - `POST /friends/requests/{id}/accept`
   - `DELETE /friends/requests/{id}`
+  - `GET /dm/{friend_id}`
+  - `POST /dm/{friend_id}`
   - all `servers`, `channels`, `messages` routes
 
 **Errors**

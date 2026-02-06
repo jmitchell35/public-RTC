@@ -78,6 +78,7 @@ pub async fn list_requests(
                 id: req.user_id,
                 username: req.username,
                 friend_code: req.friend_code,
+                status: req.status,
             },
             created_at: req.created_at,
         })
@@ -91,6 +92,7 @@ pub async fn list_requests(
                 id: req.user_id,
                 username: req.username,
                 friend_code: req.friend_code,
+                status: req.status,
             },
             created_at: req.created_at,
         })

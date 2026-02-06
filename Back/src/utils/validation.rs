@@ -17,6 +17,10 @@ pub fn validate_channel_name(name: &str) -> bool {
     len >= 2 && len <= 64
 }
 
+pub fn validate_user_status(status: &str) -> bool {
+    matches!(status, "online" | "offline" | "dnd")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
