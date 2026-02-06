@@ -81,7 +81,7 @@ pub async fn list_messages(
     );
 
     Ok(Json(DirectMessagesResponse {
-        friend: UserPublic::from(&friend),
+        friend,
         messages,
     }))
 }
@@ -146,7 +146,7 @@ pub async fn send_message(
     let messages = vec![message.clone()];
 
     Ok(Json(DirectMessagesResponse {
-        friend: UserPublic::from(&friend),
+        friend,
         messages,
     }))
 }
