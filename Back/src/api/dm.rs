@@ -8,7 +8,8 @@ use crate::{
 };
 use axum::{
     extract::{Path, Query, State},
-    routing::get,
+    http::StatusCode,
+    routing::{get, put},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -21,10 +22,20 @@ pub struct SendDirectMessageRequest {
     pub content: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct EditDirectMessageRequest {
+    pub content: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct DirectMessagesResponse {
     pub friend: UserPublic,
     pub messages: Vec<DirectMessage>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DirectMessageResponse {
+    pub message: DirectMessage,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,7 +45,12 @@ pub struct DirectMessagesQuery {
 }
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/dm/{friend_id}", get(list_messages).post(send_message))
+    Router::new()
+        .route("/dm/{friend_id}", get(list_messages).post(send_message))
+        .route(
+            "/dm/messages/{message_id}",
+            put(edit_message).delete(delete_message),
+        )
 }
 
 pub async fn list_messages(
@@ -149,6 +165,105 @@ pub async fn send_message(
         friend,
         messages,
     }))
+}
+
+pub async fn edit_message(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(message_id): Path<Uuid>,
+    Json(payload): Json<EditDirectMessageRequest>,
+) -> ApiResult<DirectMessageResponse> {
+    let content = payload.content.trim();
+    if content.is_empty() {
+        return Err(ApiError::BadRequest("empty message".to_string()));
+    }
+
+    let message = db::direct_messages::get_message_by_id(&state.db, message_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let conversation =
+        db::direct_messages::get_conversation_by_id(&state.db, message.conversation_id)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+
+    if conversation.user_a != user.user_id && conversation.user_b != user.user_id {
+        return Err(ApiError::Forbidden);
+    }
+    if message.author_id != user.user_id {
+        return Err(ApiError::Forbidden);
+    }
+
+    let message = db::direct_messages::update_message_content(&state.db, message_id, content)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let friend_id = if conversation.user_a == user.user_id {
+        conversation.user_b
+    } else {
+        conversation.user_a
+    };
+
+    state.ws_hub.broadcast_user(
+        user.user_id,
+        WsEvent::DirectMessageUpdated {
+            friend_id,
+            message: message.clone(),
+        },
+    );
+    state.ws_hub.broadcast_user(
+        friend_id,
+        WsEvent::DirectMessageUpdated {
+            friend_id: user.user_id,
+            message: message.clone(),
+        },
+    );
+
+    Ok(Json(DirectMessageResponse { message }))
+}
+
+pub async fn delete_message(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(message_id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    let message = db::direct_messages::get_message_by_id(&state.db, message_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let conversation =
+        db::direct_messages::get_conversation_by_id(&state.db, message.conversation_id)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+
+    if conversation.user_a != user.user_id && conversation.user_b != user.user_id {
+        return Err(ApiError::Forbidden);
+    }
+    if message.author_id != user.user_id {
+        return Err(ApiError::Forbidden);
+    }
+
+    db::direct_messages::delete_message(&state.db, message_id).await?;
+
+    let friend_id = if conversation.user_a == user.user_id {
+        conversation.user_b
+    } else {
+        conversation.user_a
+    };
+
+    state.ws_hub.broadcast_user(
+        user.user_id,
+        WsEvent::DirectMessageDeleted {
+            friend_id,
+            message_id,
+        },
+    );
+    state.ws_hub.broadcast_user(
+        friend_id,
+        WsEvent::DirectMessageDeleted {
+            friend_id: user.user_id,
+            message_id,
+        },
+    );
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn log_db_timing(

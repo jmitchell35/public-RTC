@@ -83,3 +83,27 @@ pub async fn set_status(
     .await?;
     Ok(())
 }
+
+pub async fn update_profile(
+    pool: &PgPool,
+    user_id: Uuid,
+    username: Option<&str>,
+    email: Option<&str>,
+    password_hash: Option<&str>,
+) -> Result<Option<User>, ApiError> {
+    let user = sqlx::query_as::<_, User>(
+        r#"UPDATE users
+        SET username = COALESCE($2, username),
+            email = COALESCE($3, email),
+            password_hash = COALESCE($4, password_hash)
+        WHERE id = $1
+        RETURNING id, username, email, password_hash, friend_code, status, created_at"#,
+    )
+    .bind(user_id)
+    .bind(username)
+    .bind(email)
+    .bind(password_hash)
+    .fetch_optional(pool)
+    .await?;
+    Ok(user)
+}

@@ -24,6 +24,8 @@ pub enum WsEvent {
     FriendRequestRemoved { request_id: Uuid },
     FriendStatusUpdated { user: UserPublic },
     DirectMessage { friend_id: Uuid, message: DirectMessage },
+    DirectMessageUpdated { friend_id: Uuid, message: DirectMessage },
+    DirectMessageDeleted { friend_id: Uuid, message_id: Uuid },
     DirectTyping { friend_id: Uuid, is_typing: bool },
 }
 

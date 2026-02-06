@@ -26,6 +26,14 @@ export type WsEvent =
           data: { friend_id: string; message: DirectMessage };
       }
     | {
+          type: 'DirectMessageUpdated';
+          data: { friend_id: string; message: DirectMessage };
+      }
+    | {
+          type: 'DirectMessageDeleted';
+          data: { friend_id: string; message_id: string };
+      }
+    | {
           type: 'DirectTyping';
           data: { friend_id: string; is_typing: boolean };
       }

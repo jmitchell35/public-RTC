@@ -26,6 +26,10 @@ Assembles public and protected routes. Applies JWT middleware to protected route
   - `DELETE /friends/requests/{id}`
   - `GET /dm/{friend_id}` (query: `limit`, `before` RFC3339)
   - `POST /dm/{friend_id}`
+  - `PUT /dm/messages/{message_id}`
+  - `DELETE /dm/messages/{message_id}`
+  - `GET /users/{id}`
+  - `PUT /users/{id}`
   - all `servers`, `channels`, `messages` routes
 
 **Errors**

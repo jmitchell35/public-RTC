@@ -32,6 +32,21 @@ pub async fn get_conversation(
     Ok(convo)
 }
 
+pub async fn get_conversation_by_id(
+    pool: &PgPool,
+    conversation_id: Uuid,
+) -> Result<Option<DirectConversation>, ApiError> {
+    let convo = sqlx::query_as::<_, DirectConversation>(
+        r#"SELECT id, user_a, user_b, created_at
+        FROM direct_conversations
+        WHERE id = $1"#,
+    )
+    .bind(conversation_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(convo)
+}
+
 pub async fn get_or_create_conversation(
     pool: &PgPool,
     user_a: Uuid,
@@ -74,7 +89,7 @@ pub async fn list_messages(
     before: Option<DateTime<Utc>>,
 ) -> Result<Vec<DirectMessage>, ApiError> {
     let mut messages = sqlx::query_as::<_, DirectMessage>(
-        r#"SELECT id, conversation_id, author_id, content, created_at
+        r#"SELECT id, conversation_id, author_id, content, created_at, edited_at
         FROM direct_messages
         WHERE conversation_id = $1
           AND ($2::timestamptz IS NULL OR created_at < $2)
@@ -99,7 +114,7 @@ pub async fn list_messages_for_users(
 ) -> Result<Vec<DirectMessage>, ApiError> {
     let (user_a, user_b) = order_users(user_a, user_b);
     let mut messages = sqlx::query_as::<_, DirectMessage>(
-        r#"SELECT dm.id, dm.conversation_id, dm.author_id, dm.content, dm.created_at
+        r#"SELECT dm.id, dm.conversation_id, dm.author_id, dm.content, dm.created_at, dm.edited_at
         FROM direct_messages dm
         JOIN direct_conversations dc ON dm.conversation_id = dc.id
         WHERE dc.user_a = $1
@@ -128,7 +143,7 @@ pub async fn create_message(
     let message = sqlx::query_as::<_, DirectMessage>(
         r#"INSERT INTO direct_messages (id, conversation_id, author_id, content)
         VALUES ($1, $2, $3, $4)
-        RETURNING id, conversation_id, author_id, content, created_at"#,
+        RETURNING id, conversation_id, author_id, content, created_at, edited_at"#,
     )
     .bind(message_id)
     .bind(conversation_id)
@@ -137,4 +152,45 @@ pub async fn create_message(
     .fetch_one(pool)
     .await?;
     Ok(message)
+}
+
+pub async fn get_message_by_id(
+    pool: &PgPool,
+    message_id: Uuid,
+) -> Result<Option<DirectMessage>, ApiError> {
+    let message = sqlx::query_as::<_, DirectMessage>(
+        r#"SELECT id, conversation_id, author_id, content, created_at, edited_at
+        FROM direct_messages
+        WHERE id = $1"#,
+    )
+    .bind(message_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(message)
+}
+
+pub async fn update_message_content(
+    pool: &PgPool,
+    message_id: Uuid,
+    content: &str,
+) -> Result<Option<DirectMessage>, ApiError> {
+    let message = sqlx::query_as::<_, DirectMessage>(
+        r#"UPDATE direct_messages
+        SET content = $2, edited_at = NOW()
+        WHERE id = $1
+        RETURNING id, conversation_id, author_id, content, created_at, edited_at"#,
+    )
+    .bind(message_id)
+    .bind(content)
+    .fetch_optional(pool)
+    .await?;
+    Ok(message)
+}
+
+pub async fn delete_message(pool: &PgPool, message_id: Uuid) -> Result<(), ApiError> {
+    sqlx::query("DELETE FROM direct_messages WHERE id = $1")
+        .bind(message_id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }

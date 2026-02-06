@@ -56,6 +56,7 @@ pub struct DirectMessage {
     pub author_id: UserId,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub edited_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

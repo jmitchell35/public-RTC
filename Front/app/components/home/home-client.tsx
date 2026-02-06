@@ -384,7 +384,7 @@ export default function HomeClient({
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
                         <Link
-                            href="/profile"
+                            href={`/profile/${me.id}`}
                             className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-slate-50"
                             aria-label="Open profile"
                         >
