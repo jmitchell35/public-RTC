@@ -384,9 +384,9 @@ export default function HomeClient({
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
                         <Link
-                            href="/settings"
+                            href="/profile"
                             className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-slate-50"
-                            aria-label="Open settings"
+                            aria-label="Open profile"
                         >
                             <div className="relative h-10 w-10">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900" />
