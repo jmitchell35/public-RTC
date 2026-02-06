@@ -103,7 +103,7 @@ export async function authenticate(
         path: '/',
     });
 
-    redirect(parsed.data.redirectTo || '/dashboard');
+    redirect(parsed.data.redirectTo || '/home');
 }
 
 export async function registerUser(
@@ -165,5 +165,5 @@ export async function registerUser(
         path: '/',
     });
 
-    redirect(parsed.data.redirectTo || '/');
+    redirect(parsed.data.redirectTo || '/home');
 }

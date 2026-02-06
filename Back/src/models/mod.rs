@@ -14,13 +14,15 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password_hash: String,
+    pub friend_code: String,
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserPublic {
     pub id: UserId,
     pub username: String,
+    pub friend_code: String,
 }
 
 impl From<&User> for UserPublic {
@@ -28,6 +30,7 @@ impl From<&User> for UserPublic {
         Self {
             id: user.id,
             username: user.username.clone(),
+            friend_code: user.friend_code.clone(),
         }
     }
 }

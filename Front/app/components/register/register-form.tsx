@@ -15,7 +15,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function RegisterForm() {
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get('callbackUrl') || '/';
+    const callbackUrl = searchParams.get('callbackUrl') || '/home';
     const [errorMessage, formAction, isPending] = useActionState(
         registerUser,
         undefined,

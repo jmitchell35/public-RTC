@@ -18,6 +18,11 @@ Assembles public and protected routes. Applies JWT middleware to protected route
 - Protected routes (JWT middleware):
   - `GET /me`
   - `POST /auth/logout`
+  - `GET /friends`
+  - `GET /friends/requests`
+  - `POST /friends/requests`
+  - `POST /friends/requests/{id}/accept`
+  - `DELETE /friends/requests/{id}`
   - all `servers`, `channels`, `messages` routes
 
 **Errors**
