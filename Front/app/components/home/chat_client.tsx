@@ -207,7 +207,7 @@ export function ChatClient({
         }
 
         try {
-            const res = await fetch(`/api/messages/${channelId}`, {
+            const res = await fetch(`/api/channels/${channelId}/messages`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content }),
