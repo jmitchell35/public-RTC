@@ -16,6 +16,15 @@ export type FriendRequestsResponse = {
     outgoing: FriendRequestItem[];
 };
 
+export type UserProfile = {
+    id: string;
+    username: string;
+    email: string;
+    friend_code: string;
+    status: string;
+    created_at: string;
+};
+
 export type DirectMessage = {
     id: string;
     conversation_id: string;
