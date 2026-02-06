@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AddFriendForm from '@/components/home/add-friend-form';
 import FriendList from '@/components/home/friend-list';
 import PendingRequests from '@/components/home/pending-requests';
@@ -95,6 +96,7 @@ export default function HomeClient({
     initialRequests,
     initialTab = 'friends',
 }: HomeClientProps) {
+    const router = useRouter();
     const ws = useHomeWs();
     const [me, setMe] = useState<UserPublic | null>(initialMe);
     const [friends, setFriends] = useState<UserPublic[]>(
@@ -353,6 +355,16 @@ export default function HomeClient({
         ? friends.find((friend) => friend.id === lastNotification.friendId)
         : null;
 
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout failed', error);
+        } finally {
+            router.replace('/login');
+        }
+    };
+
     return (
         <main className="min-h-screen bg-[#eef2f7] text-slate-900">
             <header className="border-b border-slate-200 bg-white/90">
@@ -371,7 +383,11 @@ export default function HomeClient({
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-3">
+                        <Link
+                            href="/settings"
+                            className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-slate-50"
+                            aria-label="Open settings"
+                        >
                             <div className="relative h-10 w-10">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900" />
                                 <span
@@ -386,8 +402,8 @@ export default function HomeClient({
                                     {status.label}
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
                             {STATUS_OPTIONS.map((value) => {
                                 const option = getStatus(value);
                                 return (
@@ -404,6 +420,12 @@ export default function HomeClient({
                                     </button>
                                 );
                             })}
+                            <button
+                                onClick={handleLogout}
+                                className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
                 </div>
