@@ -5,6 +5,37 @@ export type UserPublic = {
     status: string;
 };
 
+export type Server = {
+    id: string;
+    name: string;
+    owner_id: string;
+    created_at: string;
+};
+
+export type Channel = {
+    id: string;
+    server_id: string;
+    name: string;
+    created_at: string;
+};
+
+export type ServerMember = {
+    user_id: string;
+    username: string;
+    role: 'owner' | 'admin' | 'member';
+    online: boolean;
+};
+
+export type ChannelMessage = {
+    id: string;
+    channel_id: string;
+    author_id: string;
+    content: string;
+    created_at: string;
+    edited_at?: string | null;
+    pinned?: boolean;
+};
+
 export type FriendRequestItem = {
     id: string;
     user: UserPublic;

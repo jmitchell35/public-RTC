@@ -14,7 +14,8 @@ export async function GET(
   const headers = authHeaders(req);
   if (!headers) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { response } = await fetchBackend(`/channels/${params.id}/messages`, {
+  const query = req.nextUrl.search ?? "";
+  const { response } = await fetchBackend(`/channels/${params.id}/messages${query}`, {
     method: "GET",
     headers,
     cache: "no-store",

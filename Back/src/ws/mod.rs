@@ -12,6 +12,7 @@ pub mod handler;
 pub enum WsEvent {
     Message { message: Message },
     MessageUpdated { message: Message },
+    MessageDeleted { channel_id: Uuid, message_id: Uuid },
     UserConnected { server_id: Uuid, user: UserPublic },
     UserDisconnected { server_id: Uuid, user_id: Uuid },
     Typing { channel_id: Uuid, user_id: Uuid, is_typing: bool },

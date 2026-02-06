@@ -10,7 +10,6 @@ pub async fn create(
 ) -> Result<User, ApiError> {
     let user_id = Uuid::new_v4();
     let friend_code = user_id.simple().to_string()[..8].to_string();
-    let friend_code = user_id.simple().to_string()[..8].to_string();
     let user = sqlx::query_as::<_, User>(
         r#"INSERT INTO users (id, username, email, password_hash, friend_code)
         VALUES ($1, $2, $3, $4, $5)
@@ -20,7 +19,6 @@ pub async fn create(
     .bind(username)
     .bind(email)
     .bind(password_hash)
-    .bind(friend_code)
     .bind(friend_code)
     .fetch_one(pool)
     .await?;

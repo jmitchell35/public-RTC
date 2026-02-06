@@ -132,6 +132,13 @@ pub async fn delete_message(
         return Err(ApiError::Forbidden);
     }
     db::messages::delete(&state.db, message_id).await?;
+    state.ws_hub.broadcast_channel(
+        message.channel_id,
+        WsEvent::MessageDeleted {
+            channel_id: message.channel_id,
+            message_id,
+        },
+    );
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 

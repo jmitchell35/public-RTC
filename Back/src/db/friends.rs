@@ -17,20 +17,13 @@ pub struct FriendRequestWithUser {
     pub user_id: Uuid,
     pub username: String,
     pub friend_code: String,
-<<<<<<< HEAD
     pub status: String,
-=======
->>>>>>> front_logged_in_refacto
     pub created_at: DateTime<Utc>,
 }
 
 pub async fn list_friends(pool: &PgPool, user_id: Uuid) -> Result<Vec<UserPublic>, ApiError> {
     let friends = sqlx::query_as::<_, UserPublic>(
-<<<<<<< HEAD
         r#"SELECT u.id, u.username, u.friend_code, u.status
-=======
-        r#"SELECT u.id, u.username, u.friend_code
->>>>>>> front_logged_in_refacto
         FROM friends f
         JOIN users u ON u.id = f.friend_id
         WHERE f.user_id = $1
@@ -42,7 +35,6 @@ pub async fn list_friends(pool: &PgPool, user_id: Uuid) -> Result<Vec<UserPublic
     Ok(friends)
 }
 
-<<<<<<< HEAD
 pub async fn get_friend(
     pool: &PgPool,
     user_id: Uuid,
@@ -61,18 +53,12 @@ pub async fn get_friend(
     Ok(friend)
 }
 
-=======
->>>>>>> front_logged_in_refacto
 pub async fn list_incoming_requests(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<Vec<FriendRequestWithUser>, ApiError> {
     let requests = sqlx::query_as::<_, FriendRequestWithUser>(
-<<<<<<< HEAD
         r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, u.status, fr.created_at
-=======
-        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, fr.created_at
->>>>>>> front_logged_in_refacto
         FROM friend_requests fr
         JOIN users u ON u.id = fr.requester_id
         WHERE fr.addressee_id = $1
@@ -89,11 +75,7 @@ pub async fn list_outgoing_requests(
     user_id: Uuid,
 ) -> Result<Vec<FriendRequestWithUser>, ApiError> {
     let requests = sqlx::query_as::<_, FriendRequestWithUser>(
-<<<<<<< HEAD
         r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, u.status, fr.created_at
-=======
-        r#"SELECT fr.id, u.id as user_id, u.username, u.friend_code, fr.created_at
->>>>>>> front_logged_in_refacto
         FROM friend_requests fr
         JOIN users u ON u.id = fr.addressee_id
         WHERE fr.requester_id = $1
@@ -105,7 +87,6 @@ pub async fn list_outgoing_requests(
     Ok(requests)
 }
 
-<<<<<<< HEAD
 pub async fn list_friend_ids(pool: &PgPool, user_id: Uuid) -> Result<Vec<Uuid>, ApiError> {
     let ids = sqlx::query_scalar::<_, Uuid>(
         r#"SELECT friend_id
@@ -118,8 +99,6 @@ pub async fn list_friend_ids(pool: &PgPool, user_id: Uuid) -> Result<Vec<Uuid>, 
     Ok(ids)
 }
 
-=======
->>>>>>> front_logged_in_refacto
 pub async fn has_friendship(
     pool: &PgPool,
     user_id: Uuid,
@@ -176,21 +155,14 @@ pub async fn delete_request(
     pool: &PgPool,
     request_id: Uuid,
     user_id: Uuid,
-<<<<<<< HEAD
 ) -> Result<FriendRequestRow, ApiError> {
     let request = sqlx::query_as::<_, FriendRequestRow>(
         r#"SELECT id, requester_id, addressee_id, created_at
         FROM friend_requests
-=======
-) -> Result<(), ApiError> {
-    let result = sqlx::query(
-        r#"DELETE FROM friend_requests
->>>>>>> front_logged_in_refacto
         WHERE id = $1 AND (requester_id = $2 OR addressee_id = $2)"#,
     )
     .bind(request_id)
     .bind(user_id)
-<<<<<<< HEAD
     .fetch_optional(pool)
     .await?
     .ok_or(ApiError::NotFound)?;
@@ -204,14 +176,6 @@ pub async fn delete_request(
     .await?;
 
     Ok(request)
-=======
-    .execute(pool)
-    .await?;
-    if result.rows_affected() == 0 {
-        return Err(ApiError::NotFound);
-    }
-    Ok(())
->>>>>>> front_logged_in_refacto
 }
 
 pub async fn accept_request(

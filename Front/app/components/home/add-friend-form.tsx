@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import { useState } from 'react';
 
 type AddFriendFormProps = {
@@ -37,33 +36,13 @@ export default function AddFriendForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
-=======
-import { useActionState } from 'react';
-import { sendFriendRequest } from '@/lib/friend-actions';
-
-type AddFriendFormProps = {
-    friendCode?: string;
-};
-
-export default function AddFriendForm({ friendCode }: AddFriendFormProps) {
-    const [errorMessage, formAction, isPending] = useActionState(
-        sendFriendRequest,
-        undefined,
-    );
-
-    return (
-        <form action={formAction} className="space-y-3">
->>>>>>> front_logged_in_refacto
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <input
                     name="friendCode"
                     type="text"
                     placeholder="Enter a friend code"
-<<<<<<< HEAD
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
-=======
->>>>>>> front_logged_in_refacto
                     className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
                     required
                 />
@@ -79,11 +58,7 @@ export default function AddFriendForm({ friendCode }: AddFriendFormProps) {
                 <span>
                     Your friend code:{' '}
                     <span className="font-semibold text-slate-700">
-<<<<<<< HEAD
                         {friendCode ?? '...'}
-=======
-                        {friendCode ?? 'loading'}
->>>>>>> front_logged_in_refacto
                     </span>
                 </span>
                 {errorMessage && (

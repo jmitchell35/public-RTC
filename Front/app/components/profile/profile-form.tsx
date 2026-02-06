@@ -12,12 +12,12 @@ import { UpdateButton } from '@/components/profile/update-button';
 import { useActionState } from 'react';
 import { updateUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
-import { User } from '@/lib/type_definitions'
+import type { UserProfile } from '@/lib/types';
 
 export default function ProfileForm({
                                         user,
                                     }: {
-    user: User;
+    user: UserProfile | null;
 }) {
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/home';
@@ -25,6 +25,19 @@ export default function ProfileForm({
         updateUser,
         undefined,
     );
+
+    if (!user) {
+        return (
+            <div className="rounded-lg bg-gray-50 px-6 pb-4 pt-8">
+                <h1 className={`${lusitana.className} mb-3 text-2xl`}>
+                    Your profile.
+                </h1>
+                <p className="text-sm text-gray-500">
+                    Unable to load profile. Please sign in again.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <form action={formAction} className="space-y-3">
@@ -80,20 +93,18 @@ export default function ProfileForm({
                     <div className="mt-4">
                         <label
                             className="mb-3 mt-5 block text-xs font-medium text-gray-900"
-                            htmlFor="password"
+                            htmlFor="currentPassword"
                         >
-                            Password
+                            Current password
                         </label>
                         <div className="relative" suppressHydrationWarning>
                             <input
                                 className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
-                                id="password"
+                                id="currentPassword"
                                 type="password"
-                                name="password"
+                                name="currentPassword"
                                 defaultValue=""
-                                placeholder="Type in new password"
-                                required
-                                minLength={8}
+                                placeholder="Type your current password"
                                 suppressHydrationWarning
                             />
                             <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
@@ -102,20 +113,38 @@ export default function ProfileForm({
                     <div className="mt-4">
                         <label
                             className="mb-3 mt-5 block text-xs font-medium text-gray-900"
-                            htmlFor="passwordConfirmation"
+                            htmlFor="newPassword"
                         >
-                            Password confirmation
+                            New password
                         </label>
                         <div className="relative" suppressHydrationWarning>
                             <input
                                 className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
-                                id="passwordConfirmation"
+                                id="newPassword"
                                 type="password"
-                                name="passwordConfirmation"
+                                name="newPassword"
+                                defaultValue=""
+                                placeholder="Type in new password"
+                                suppressHydrationWarning
+                            />
+                            <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+                        </div>
+                    </div>
+                    <div className="mt-4">
+                        <label
+                            className="mb-3 mt-5 block text-xs font-medium text-gray-900"
+                            htmlFor="newPasswordConfirmation"
+                        >
+                            New password confirmation
+                        </label>
+                        <div className="relative" suppressHydrationWarning>
+                            <input
+                                className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+                                id="newPasswordConfirmation"
+                                type="password"
+                                name="newPasswordConfirmation"
                                 defaultValue=""
                                 placeholder="Confirm new password"
-                                required
-                                minLength={8}
                                 suppressHydrationWarning
                             />
                             <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />

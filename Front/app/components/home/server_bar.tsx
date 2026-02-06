@@ -1,8 +1,7 @@
 import Image from "next/image";
-import { Server } from "@/lib/servers";
 
 type Props = {
-    servers: Server[];
+    servers: Array<{ id: string; name: string; icon: string; notif?: number }>;
     onAdd?: () => void;
     onSelect: (id: string) => void;
     activeId?: string;

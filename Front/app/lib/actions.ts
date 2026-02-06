@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { fetchBackend } from './backend';
+import type { UserProfile } from './types';
 
 // Schema to match data against
 // const FormSchema = z.object({
@@ -52,13 +53,33 @@ const updateSchema = z.object({
 });
 
 const passwordUpdateSchema = z.object({
-    password: z.string().min(8),
-    passwordConfirmation: z.string().min(8),
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8),
+    newPasswordConfirmation: z.string().min(8),
 });
 
 type AuthResponse = {
     token: string;
 };
+
+async function authFetch(path: string, init: RequestInit) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+        redirect('/login');
+    }
+
+    const headers = new Headers(init.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+
+    const { response } = await fetchBackend(path, {
+        ...init,
+        headers,
+        cache: 'no-store',
+    });
+
+    return response;
+}
 
 export async function authenticate(
     _prevState: string | undefined,
@@ -193,57 +214,107 @@ export async function updateUser(
         return 'Invalid update details.';
     }
 
-    if (formData.get('password') !=="") {
+    const currentPassword = String(formData.get('currentPassword') ?? '');
+    const newPassword = String(formData.get('newPassword') ?? '');
+    const newPasswordConfirmation = String(
+        formData.get('newPasswordConfirmation') ?? '',
+    );
+
+    if (newPassword || currentPassword || newPasswordConfirmation) {
         const parsedPassword = passwordUpdateSchema.safeParse({
-            password: formData.get('password'),
-            passwordConfirmation: formData.get('passwordConfirmation'),
-        })
+            currentPassword,
+            newPassword,
+            newPasswordConfirmation,
+        });
+        if (!parsedPassword.success) {
+            return 'Invalid password details.';
+        }
+        if (newPassword !== newPasswordConfirmation) {
+            return 'Passwords do not match.';
+        }
     }
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    let meResponse: Response;
+    try {
+        meResponse = await authFetch('/me', { method: 'GET' });
+    } catch (error) {
+        console.error('Profile lookup failed', error);
+        return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+    }
 
-    if (!token) {
+    if (!meResponse.ok) {
         return 'Unauthorized';
     }
 
-    const userId = decodeToken(token).user_id;
+    const meData = (await meResponse.json()) as { user: { id: string } };
+    const userId = meData?.user?.id;
+    if (!userId) {
+        return 'Unauthorized';
+    }
+
+    const payload: Record<string, string> = {
+        username: parsed.data.username,
+        email: parsed.data.email,
+    };
+    if (newPassword) {
+        payload.current_password = currentPassword;
+        payload.new_password = newPassword;
+    }
 
     let response: Response;
     try {
-        const result = await fetchBackend(`/users/update/${user.user_id}`, {
-            method: 'POST',
+        response = await authFetch(`/users/${userId}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: parsed.data.username,
-                email: parsed.data.email,
-                password: parsed.data.password,
-            }),
-            cache: 'no-store',
+            body: JSON.stringify(payload),
         });
-        response = result.response;
     } catch (error) {
-        console.error('Auth signup failed to reach backend', error);
+        console.error('Profile update failed', error);
         return 'Backend unreachable. Start the backend and check BACKEND_URL.';
     }
 
     if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
         if (response.status === 409) {
             return 'Account already exists.';
         }
         if (response.status === 400) {
-            return 'Invalid signup details.';
+            return errorBody?.error ?? 'Invalid update details.';
         }
-        if (response.status === 404) {
-            return 'Backend not found. Check BACKEND_URL.';
-        }
-        return 'Something went wrong.';
-    }
-
-    const data = (await response.json()) as AuthResponse;
-    if (!data?.token) {
-        return 'Something went wrong.';
+        return errorBody?.error ?? 'Something went wrong.';
     }
 
     redirect(parsed.data.redirectTo || '/home');
+}
+
+export async function fetchProfile(): Promise<UserProfile | null> {
+    let meResponse: Response;
+    try {
+        meResponse = await authFetch('/me', { method: 'GET' });
+    } catch (error) {
+        console.error('Profile lookup failed', error);
+        return null;
+    }
+
+    if (!meResponse.ok) {
+        return null;
+    }
+
+    const meData = (await meResponse.json()) as { user: { id: string } };
+    const userId = meData?.user?.id;
+    if (!userId) {
+        return null;
+    }
+
+    try {
+        const response = await authFetch(`/users/${userId}`, { method: 'GET' });
+        if (!response.ok) {
+            return null;
+        }
+        const data = (await response.json()) as { user: UserProfile };
+        return data.user ?? null;
+    } catch (error) {
+        console.error('Profile fetch failed', error);
+        return null;
+    }
 }

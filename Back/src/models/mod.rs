@@ -59,27 +59,6 @@ pub struct DirectMessage {
     pub edited_at: Option<DateTime<Utc>>,
 }
 
-pub type DirectConversationId = Uuid;
-pub type DirectMessageId = Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct DirectConversation {
-    pub id: DirectConversationId,
-    pub user_a: UserId,
-    pub user_b: UserId,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct DirectMessage {
-    pub id: DirectMessageId,
-    pub conversation_id: DirectConversationId,
-    pub author_id: UserId,
-    pub content: String,
-    pub created_at: DateTime<Utc>,
-    pub edited_at: Option<DateTime<Utc>>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Server {
     pub id: ServerId,

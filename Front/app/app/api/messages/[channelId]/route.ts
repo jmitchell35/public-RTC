@@ -4,13 +4,15 @@ import { cookies } from "next/headers";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { channelId: string } }
+  { params }: { params: { channelId: string } | Promise<{ channelId: string }> }
 ) {
-  const token = cookies().get("auth_token")?.value;
+  const { channelId } = await params;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { response } = await fetchBackend(`/channels/${params.channelId}/messages`, {
+  const { response } = await fetchBackend(`/channels/${channelId}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
