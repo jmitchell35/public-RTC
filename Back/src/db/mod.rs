@@ -11,10 +11,7 @@ pub mod servers;
 pub mod tokens;
 pub mod users;
 
-pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::migrate!("./migrations").run(pool).await?;
-    Ok(())
-}
+
 
 #[cfg(test)]
 mod tests {

@@ -19,6 +19,7 @@ pub fn router(state: AppState) -> Router<AppState> {
         .route("/me/status", axum::routing::post(auth::update_status))
         .route("/auth/logout", axum::routing::post(auth::logout))
         .merge(friends::routes())
+        .merge(friends::routes())
         .merge(dm::routes())
         .merge(servers::routes())
         .merge(channels::routes())

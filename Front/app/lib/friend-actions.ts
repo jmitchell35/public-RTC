@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { fetchBackend } from './backend';
+<<<<<<< HEAD
 import type {
     FriendRequestsResponse,
     UserPublic,
@@ -13,6 +14,25 @@ import type {
 const statusSchema = z.object({
     status: z.enum(['online', 'offline', 'dnd']),
 });
+=======
+
+export type UserPublic = {
+    id: string;
+    username: string;
+    friend_code: string;
+};
+
+export type FriendRequestItem = {
+    id: string;
+    user: UserPublic;
+    created_at: string;
+};
+
+export type FriendRequestsResponse = {
+    incoming: FriendRequestItem[];
+    outgoing: FriendRequestItem[];
+};
+>>>>>>> front_logged_in_refacto
 
 const friendRequestSchema = z.object({
     friendCode: z.string().min(6).max(32),
@@ -105,7 +125,10 @@ export async function sendFriendRequest(
     }
 
     revalidatePath('/home');
+<<<<<<< HEAD
     revalidatePath('/home/add');
+=======
+>>>>>>> front_logged_in_refacto
     return undefined;
 }
 
@@ -128,7 +151,10 @@ export async function acceptFriendRequest(formData: FormData) {
     }
 
     revalidatePath('/home');
+<<<<<<< HEAD
     revalidatePath('/home/add');
+=======
+>>>>>>> front_logged_in_refacto
 }
 
 export async function rejectFriendRequest(formData: FormData) {
@@ -150,6 +176,7 @@ export async function rejectFriendRequest(formData: FormData) {
     }
 
     revalidatePath('/home');
+<<<<<<< HEAD
     revalidatePath('/home/add');
 }
 
@@ -180,4 +207,6 @@ export async function updateStatus(formData: FormData) {
 
     revalidatePath('/home');
     revalidatePath('/home/add');
+=======
+>>>>>>> front_logged_in_refacto
 }
