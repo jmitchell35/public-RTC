@@ -4,9 +4,10 @@ type RouteParams = {
     params: { id: string } | Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
     const { id } = await params;
-    return forwardBackend(`/dm/${id}`, { method: 'GET' });
+    const search = new URL(request.url).search;
+    return forwardBackend(`/dm/${id}${search}`, { method: 'GET' });
 }
 
 export async function POST(request: Request, { params }: RouteParams) {

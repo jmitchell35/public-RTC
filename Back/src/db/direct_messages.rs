@@ -1,4 +1,8 @@
-use crate::{models::{DirectConversation, DirectMessage}, utils::ApiError};
+use crate::{
+    models::{DirectConversation, DirectMessage},
+    utils::ApiError,
+};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -66,16 +70,23 @@ pub async fn get_or_create_conversation(
 pub async fn list_messages(
     pool: &PgPool,
     conversation_id: Uuid,
+    limit: i64,
+    before: Option<DateTime<Utc>>,
 ) -> Result<Vec<DirectMessage>, ApiError> {
-    let messages = sqlx::query_as::<_, DirectMessage>(
+    let mut messages = sqlx::query_as::<_, DirectMessage>(
         r#"SELECT id, conversation_id, author_id, content, created_at
         FROM direct_messages
         WHERE conversation_id = $1
-        ORDER BY created_at ASC"#,
+          AND ($2::timestamptz IS NULL OR created_at < $2)
+        ORDER BY created_at DESC
+        LIMIT $3"#,
     )
     .bind(conversation_id)
+    .bind(before)
+    .bind(limit)
     .fetch_all(pool)
     .await?;
+    messages.reverse();
     Ok(messages)
 }
 

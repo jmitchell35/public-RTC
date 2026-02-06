@@ -31,8 +31,21 @@ async function authFetch(path: string, init: RequestInit) {
     return response;
 }
 
-export async function getDirectMessages(friendId: string) {
-    const response = await authFetch(`/dm/${friendId}`, { method: 'GET' });
+export async function getDirectMessages(
+    friendId: string,
+    options?: { limit?: number; before?: string },
+) {
+    const params = new URLSearchParams();
+    if (options?.limit) {
+        params.set('limit', String(options.limit));
+    }
+    if (options?.before) {
+        params.set('before', options.before);
+    }
+    const query = params.toString();
+    const response = await authFetch(`/dm/${friendId}${query ? `?${query}` : ''}`, {
+        method: 'GET',
+    });
     if (response.status === 401) {
         redirect('/login');
     }

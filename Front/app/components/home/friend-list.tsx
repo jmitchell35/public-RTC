@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRef } from 'react';
 import { lusitana } from '@/lib/fonts';
 import type { UserPublic } from '@/lib/types';
 
@@ -28,6 +29,18 @@ export default function FriendList({
     unreadCounts,
     onOpenFriend,
 }: FriendListProps) {
+    const prefetched = useRef(new Set<string>());
+
+    const prefetchConversation = (friendId: string) => {
+        if (prefetched.current.has(friendId)) {
+            return;
+        }
+        prefetched.current.add(friendId);
+        fetch(`/api/dm/${friendId}?limit=50`, { method: 'GET' }).catch(() => {
+            prefetched.current.delete(friendId);
+        });
+    };
+
     return (
         <section className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
@@ -52,6 +65,13 @@ export default function FriendList({
                                 key={friend.id}
                                 href={`/home/${friend.id}`}
                                 onClick={() => onOpenFriend?.(friend.id)}
+                                onMouseEnter={() =>
+                                    prefetchConversation(friend.id)
+                                }
+                                onFocus={() => prefetchConversation(friend.id)}
+                                onTouchStart={() =>
+                                    prefetchConversation(friend.id)
+                                }
                                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50"
                             >
                                 <div className="flex items-center gap-3">

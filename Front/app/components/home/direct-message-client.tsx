@@ -31,7 +31,9 @@ export default function DirectMessageClient({
             try {
                 const [meResponse, dmResponse] = await Promise.all([
                     fetch('/api/me', { method: 'GET' }),
-                    fetch(`/api/dm/${friendId}`, { method: 'GET' }),
+                    fetch(`/api/dm/${friendId}?limit=50`, {
+                        method: 'GET',
+                    }),
                 ]);
 
                 if (!active) {
