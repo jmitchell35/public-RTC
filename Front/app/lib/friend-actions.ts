@@ -5,24 +5,10 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { fetchBackend } from './backend';
-
-export type UserPublic = {
-    id: string;
-    username: string;
-    friend_code: string;
-    status: string;
-};
-
-export type FriendRequestItem = {
-    id: string;
-    user: UserPublic;
-    created_at: string;
-};
-
-export type FriendRequestsResponse = {
-    incoming: FriendRequestItem[];
-    outgoing: FriendRequestItem[];
-};
+import type {
+    FriendRequestsResponse,
+    UserPublic,
+} from './types';
 
 const statusSchema = z.object({
     status: z.enum(['online', 'offline', 'dnd']),

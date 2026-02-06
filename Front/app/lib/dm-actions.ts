@@ -5,20 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { fetchBackend } from './backend';
-import type { UserPublic } from './friend-actions';
-
-export type DirectMessage = {
-    id: string;
-    conversation_id: string;
-    author_id: string;
-    content: string;
-    created_at: string;
-};
-
-export type DirectMessagesResponse = {
-    friend: UserPublic;
-    messages: DirectMessage[];
-};
+import type { DirectMessagesResponse } from './types';
 
 const messageSchema = z.object({
     friendId: z.string().uuid(),

@@ -69,6 +69,18 @@ pub async fn list_outgoing_requests(
     Ok(requests)
 }
 
+pub async fn list_friend_ids(pool: &PgPool, user_id: Uuid) -> Result<Vec<Uuid>, ApiError> {
+    let ids = sqlx::query_scalar::<_, Uuid>(
+        r#"SELECT friend_id
+        FROM friends
+        WHERE user_id = $1"#,
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(ids)
+}
+
 pub async fn has_friendship(
     pool: &PgPool,
     user_id: Uuid,
@@ -125,19 +137,27 @@ pub async fn delete_request(
     pool: &PgPool,
     request_id: Uuid,
     user_id: Uuid,
-) -> Result<(), ApiError> {
-    let result = sqlx::query(
-        r#"DELETE FROM friend_requests
+) -> Result<FriendRequestRow, ApiError> {
+    let request = sqlx::query_as::<_, FriendRequestRow>(
+        r#"SELECT id, requester_id, addressee_id, created_at
+        FROM friend_requests
         WHERE id = $1 AND (requester_id = $2 OR addressee_id = $2)"#,
     )
     .bind(request_id)
     .bind(user_id)
+    .fetch_optional(pool)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+
+    sqlx::query(
+        r#"DELETE FROM friend_requests
+        WHERE id = $1"#,
+    )
+    .bind(request_id)
     .execute(pool)
     .await?;
-    if result.rows_affected() == 0 {
-        return Err(ApiError::NotFound);
-    }
-    Ok(())
+
+    Ok(request)
 }
 
 pub async fn accept_request(

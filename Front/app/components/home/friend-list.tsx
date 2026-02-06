@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { lusitana } from '@/lib/fonts';
-import type { UserPublic } from '@/lib/friend-actions';
+import type { UserPublic } from '@/lib/types';
 
 type FriendListProps = {
     friends: UserPublic[];
+    unreadCounts?: Record<string, number>;
+    onOpenFriend?: (friendId: string) => void;
 };
 
 const statusStyles: Record<string, { label: string; dot: string }> = {
@@ -19,7 +23,11 @@ function getStatus(status?: string) {
     return statusStyles[status] ?? statusStyles.offline;
 }
 
-export default function FriendList({ friends }: FriendListProps) {
+export default function FriendList({
+    friends,
+    unreadCounts,
+    onOpenFriend,
+}: FriendListProps) {
     return (
         <section className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
@@ -38,10 +46,12 @@ export default function FriendList({ friends }: FriendListProps) {
                 ) : (
                     friends.map((friend) => {
                         const status = getStatus(friend.status);
+                        const unread = unreadCounts?.[friend.id] ?? 0;
                         return (
                             <Link
                                 key={friend.id}
                                 href={`/home/${friend.id}`}
+                                onClick={() => onOpenFriend?.(friend.id)}
                                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50"
                             >
                                 <div className="flex items-center gap-3">
@@ -60,9 +70,16 @@ export default function FriendList({ friends }: FriendListProps) {
                                         </div>
                                     </div>
                                 </div>
-                                <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-                                    Message
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    {unread > 0 && (
+                                        <span className="rounded-full bg-blue-500 px-2.5 py-1 text-xs font-semibold text-white">
+                                            {unread}
+                                        </span>
+                                    )}
+                                    <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+                                        Message
+                                    </span>
+                                </div>
                             </Link>
                         );
                     })

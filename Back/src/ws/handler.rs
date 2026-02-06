@@ -64,10 +64,11 @@ async fn handle_socket(socket: WebSocket, state: AppState, user_id: Uuid) {
     let mut server_tasks = HashMap::new();
     let mut channel_tasks = HashMap::new();
     let mut subscribed_channels = HashSet::new();
+    let user_task = subscribe_user(state.ws_hub.as_ref(), &out_tx, user_id);
 
     for server_id in server_ids {
         state.presence.set_online(server_id, user_id, true);
-        subscribe_server(&state.ws_hub, &out_tx, server_id, &mut server_tasks);
+        subscribe_server(state.ws_hub.as_ref(), &out_tx, server_id, &mut server_tasks);
         state.ws_hub.broadcast_server(
             server_id,
             WsEvent::UserConnected {
@@ -128,6 +129,7 @@ async fn handle_socket(socket: WebSocket, state: AppState, user_id: Uuid) {
     for (_, task) in channel_tasks {
         task.abort();
     }
+    user_task.abort();
     send_task.abort();
 }
 
@@ -143,7 +145,7 @@ async fn handle_inbound(
     match inbound {
         WsInbound::JoinChannel { channel_id } => {
             if subscribed_channels.insert(channel_id) {
-                subscribe_channel(&state.ws_hub, out_tx, channel_id, channel_tasks);
+                subscribe_channel(state.ws_hub.as_ref(), out_tx, channel_id, channel_tasks);
             }
         }
         WsInbound::LeaveChannel { channel_id } => {
@@ -159,7 +161,7 @@ async fn handle_inbound(
                 .flatten()
                 .is_some();
             if allowed {
-                subscribe_server(&state.ws_hub, out_tx, server_id, server_tasks);
+                subscribe_server(state.ws_hub.as_ref(), out_tx, server_id, server_tasks);
             }
         }
         WsInbound::UnsubscribeServer { server_id } => {
@@ -204,6 +206,15 @@ async fn handle_inbound(
                 WsEvent::Typing {
                     channel_id,
                     user_id,
+                    is_typing,
+                },
+            );
+        }
+        WsInbound::DirectTyping { friend_id, is_typing } => {
+            state.ws_hub.broadcast_user(
+                friend_id,
+                WsEvent::DirectTyping {
+                    friend_id: user_id,
                     is_typing,
                 },
             );
@@ -260,6 +271,15 @@ fn subscribe_server(
     let rx = hub.server_sender(server_id).subscribe();
     let task = spawn_forwarder(rx, out_tx.clone());
     tasks.insert(server_id, task);
+}
+
+fn subscribe_user(
+    hub: &WsHub,
+    out_tx: &mpsc::UnboundedSender<WsEvent>,
+    user_id: Uuid,
+) -> tokio::task::JoinHandle<()> {
+    let rx = hub.user_sender(user_id).subscribe();
+    spawn_forwarder(rx, out_tx.clone())
 }
 
 #[cfg(test)]

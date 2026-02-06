@@ -4,10 +4,11 @@ use crate::{
     models::{DirectMessage, UserPublic},
     state::AppState,
     utils::{ApiError, ApiResult},
+    ws::WsEvent,
 };
 use axum::{
     extract::{Path, State},
-    routing::{get, post},
+    routing::get,
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -86,7 +87,7 @@ pub async fn send_message(
         db::direct_messages::get_or_create_conversation(&state.db, user.user_id, friend_id)
             .await?;
 
-    db::direct_messages::create_message(
+    let message = db::direct_messages::create_message(
         &state.db,
         conversation.id,
         user.user_id,
@@ -94,7 +95,22 @@ pub async fn send_message(
     )
     .await?;
 
-    let messages = db::direct_messages::list_messages(&state.db, conversation.id).await?;
+    state.ws_hub.broadcast_user(
+        user.user_id,
+        WsEvent::DirectMessage {
+            friend_id,
+            message: message.clone(),
+        },
+    );
+    state.ws_hub.broadcast_user(
+        friend_id,
+        WsEvent::DirectMessage {
+            friend_id: user.user_id,
+            message: message.clone(),
+        },
+    );
+
+    let messages = vec![message.clone()];
 
     Ok(Json(DirectMessagesResponse {
         friend: UserPublic::from(&friend),

@@ -8,6 +8,7 @@ use rtc_backend::{
 };
 use axum::{routing::get, Router};
 use sqlx::postgres::PgPoolOptions;
+use std::time::Duration;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -22,6 +23,11 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
+        .min_connections(1)
+        .acquire_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(120))
+        .max_lifetime(Duration::from_secs(900))
+        .test_before_acquire(true)
         .connect(&config.database_url)
         .await?;
 

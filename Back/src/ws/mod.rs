@@ -1,4 +1,5 @@
-use crate::models::{Message, UserPublic};
+use crate::models::{DirectMessage, Message, UserPublic};
+use chrono::{DateTime, Utc};
 use dashmap::{DashMap, DashSet};
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
@@ -18,6 +19,12 @@ pub enum WsEvent {
     MessagePinned { message_id: Uuid, pinned: bool },
     ReactionAdded { message_id: Uuid, reaction: crate::models::MessageReaction },
     ReactionRemoved { message_id: Uuid, user_id: Uuid, emoji: String },
+    FriendRequestCreated { direction: String, request: FriendRequestPayload },
+    FriendRequestAccepted { request_id: Uuid, friend: UserPublic },
+    FriendRequestRemoved { request_id: Uuid },
+    FriendStatusUpdated { user: UserPublic },
+    DirectMessage { friend_id: Uuid, message: DirectMessage },
+    DirectTyping { friend_id: Uuid, is_typing: bool },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,13 +36,22 @@ pub enum WsInbound {
     Typing { channel_id: Uuid, is_typing: bool },
     SubscribeServer { server_id: Uuid },
     UnsubscribeServer { server_id: Uuid },
+    DirectTyping { friend_id: Uuid, is_typing: bool },
     Ping,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FriendRequestPayload {
+    pub id: Uuid,
+    pub user: UserPublic,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Clone)]
 pub struct WsHub {
     channel_broadcast: DashMap<Uuid, broadcast::Sender<WsEvent>>,
     server_broadcast: DashMap<Uuid, broadcast::Sender<WsEvent>>,
+    user_broadcast: DashMap<Uuid, broadcast::Sender<WsEvent>>,
 }
 
 impl WsHub {
@@ -43,6 +59,7 @@ impl WsHub {
         Self {
             channel_broadcast: DashMap::new(),
             server_broadcast: DashMap::new(),
+            user_broadcast: DashMap::new(),
         }
     }
 
@@ -66,12 +83,26 @@ impl WsHub {
             .clone()
     }
 
+    pub fn user_sender(&self, user_id: Uuid) -> broadcast::Sender<WsEvent> {
+        self.user_broadcast
+            .entry(user_id)
+            .or_insert_with(|| {
+                let (tx, _) = broadcast::channel(256);
+                tx
+            })
+            .clone()
+    }
+
     pub fn broadcast_channel(&self, channel_id: Uuid, event: WsEvent) {
         let _ = self.channel_sender(channel_id).send(event);
     }
 
     pub fn broadcast_server(&self, server_id: Uuid, event: WsEvent) {
         let _ = self.server_sender(server_id).send(event);
+    }
+
+    pub fn broadcast_user(&self, user_id: Uuid, event: WsEvent) {
+        let _ = self.user_sender(user_id).send(event);
     }
 }
 

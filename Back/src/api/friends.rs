@@ -4,6 +4,7 @@ use crate::{
     models::UserPublic,
     state::AppState,
     utils::{ApiError, ApiResult},
+    ws::{FriendRequestPayload, WsEvent},
 };
 use axum::{
     extract::{Path, State},
@@ -129,6 +130,35 @@ pub async fn create_request(
 
     let request =
         db::friends::create_request(&state.db, user.user_id, target.id).await?;
+    let requester = db::users::get_by_id(&state.db, user.user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    let outgoing = FriendRequestPayload {
+        id: request.id,
+        user: UserPublic::from(&target),
+        created_at: request.created_at,
+    };
+    let incoming = FriendRequestPayload {
+        id: request.id,
+        user: UserPublic::from(&requester),
+        created_at: request.created_at,
+    };
+
+    state.ws_hub.broadcast_user(
+        user.user_id,
+        WsEvent::FriendRequestCreated {
+            direction: "outgoing".to_string(),
+            request: outgoing,
+        },
+    );
+    state.ws_hub.broadcast_user(
+        target.id,
+        WsEvent::FriendRequestCreated {
+            direction: "incoming".to_string(),
+            request: incoming,
+        },
+    );
 
     Ok(Json(FriendRequestResponse {
         request: FriendRequestItem {
@@ -144,10 +174,29 @@ pub async fn accept_request(
     Extension(user): Extension<AuthUser>,
     Path(request_id): Path<Uuid>,
 ) -> ApiResult<FriendResponse> {
-    let requester_id = db::friends::accept_request(&state.db, request_id, user.user_id).await?;
+    let requester_id =
+        db::friends::accept_request(&state.db, request_id, user.user_id).await?;
     let requester = db::users::get_by_id(&state.db, requester_id)
         .await?
         .ok_or(ApiError::NotFound)?;
+    let acceptor = db::users::get_by_id(&state.db, user.user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    state.ws_hub.broadcast_user(
+        requester.id,
+        WsEvent::FriendRequestAccepted {
+            request_id,
+            friend: UserPublic::from(&acceptor),
+        },
+    );
+    state.ws_hub.broadcast_user(
+        acceptor.id,
+        WsEvent::FriendRequestAccepted {
+            request_id,
+            friend: UserPublic::from(&requester),
+        },
+    );
 
     Ok(Json(FriendResponse {
         friend: UserPublic::from(&requester),
@@ -159,6 +208,20 @@ pub async fn delete_request(
     Extension(user): Extension<AuthUser>,
     Path(request_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, ApiError> {
-    db::friends::delete_request(&state.db, request_id, user.user_id).await?;
+    let request = db::friends::delete_request(&state.db, request_id, user.user_id).await?;
+    let other_id = if request.requester_id == user.user_id {
+        request.addressee_id
+    } else {
+        request.requester_id
+    };
+
+    state.ws_hub.broadcast_user(
+        user.user_id,
+        WsEvent::FriendRequestRemoved { request_id },
+    );
+    state.ws_hub.broadcast_user(
+        other_id,
+        WsEvent::FriendRequestRemoved { request_id },
+    );
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

@@ -1,12 +1,16 @@
-use crate::{auth::JwtConfig, ws::{PresenceState, WsHub}};
+use crate::{
+    auth::JwtConfig,
+    ws::{PresenceState, WsHub},
+};
 use sqlx::PgPool;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub jwt: JwtConfig,
-    pub ws_hub: WsHub,
-    pub presence: PresenceState,
+    pub ws_hub: Arc<WsHub>,
+    pub presence: Arc<PresenceState>,
 }
 
 impl AppState {
@@ -14,8 +18,8 @@ impl AppState {
         Self {
             db,
             jwt,
-            ws_hub: WsHub::new(),
-            presence: PresenceState::new(),
+            ws_hub: Arc::new(WsHub::new()),
+            presence: Arc::new(PresenceState::new()),
         }
     }
 }

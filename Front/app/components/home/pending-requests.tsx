@@ -1,13 +1,34 @@
+'use client';
+
+import { useState } from 'react';
 import { lusitana } from '@/lib/fonts';
-import type { FriendRequestsResponse } from '@/lib/friend-actions';
-import { acceptFriendRequest, rejectFriendRequest } from '@/lib/friend-actions';
+import type { FriendRequestsResponse } from '@/lib/types';
 
 type PendingRequestsProps = {
     requests: FriendRequestsResponse;
+    onAccept: (requestId: string) => Promise<void>;
+    onReject: (requestId: string) => Promise<void>;
 };
 
-export default function PendingRequests({ requests }: PendingRequestsProps) {
+export default function PendingRequests({
+    requests,
+    onAccept,
+    onReject,
+}: PendingRequestsProps) {
+    const [pendingIds, setPendingIds] = useState<string[]>([]);
     const pendingCount = requests.incoming.length + requests.outgoing.length;
+
+    const runAction = async (
+        requestId: string,
+        action: (id: string) => Promise<void>,
+    ) => {
+        if (pendingIds.includes(requestId)) {
+            return;
+        }
+        setPendingIds((prev) => [...prev, requestId]);
+        await action(requestId);
+        setPendingIds((prev) => prev.filter((id) => id !== requestId));
+    };
 
     return (
         <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -47,26 +68,24 @@ export default function PendingRequests({ requests }: PendingRequestsProps) {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <form action={acceptFriendRequest}>
-                                            <input
-                                                type="hidden"
-                                                name="requestId"
-                                                value={request.id}
-                                            />
-                                            <button className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-400">
-                                                Accept
-                                            </button>
-                                        </form>
-                                        <form action={rejectFriendRequest}>
-                                            <input
-                                                type="hidden"
-                                                name="requestId"
-                                                value={request.id}
-                                            />
-                                            <button className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-                                                Ignore
-                                            </button>
-                                        </form>
+                                        <button
+                                            onClick={() =>
+                                                runAction(request.id, onAccept)
+                                            }
+                                            disabled={pendingIds.includes(request.id)}
+                                            className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            Accept
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                runAction(request.id, onReject)
+                                            }
+                                            disabled={pendingIds.includes(request.id)}
+                                            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            Ignore
+                                        </button>
                                     </div>
                                 </div>
                             ))
@@ -99,16 +118,15 @@ export default function PendingRequests({ requests }: PendingRequestsProps) {
                                             </div>
                                         </div>
                                     </div>
-                                    <form action={rejectFriendRequest}>
-                                        <input
-                                            type="hidden"
-                                            name="requestId"
-                                            value={request.id}
-                                        />
-                                        <button className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-                                            Cancel
-                                        </button>
-                                    </form>
+                                    <button
+                                        onClick={() =>
+                                            runAction(request.id, onReject)
+                                        }
+                                        disabled={pendingIds.includes(request.id)}
+                                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
                             ))
                         )}

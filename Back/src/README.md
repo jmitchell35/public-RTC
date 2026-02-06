@@ -64,7 +64,7 @@ cargo run
 Shared state for API and WebSocket.
 
 **Structs / functions**
-- `AppState { db: PgPool, jwt: JwtConfig, ws_hub: WsHub, presence: PresenceState }`
+- `AppState { db: PgPool, jwt: JwtConfig, ws_hub: Arc<WsHub>, presence: Arc<PresenceState> }`
 - `AppState::new(db, jwt) -> AppState`
 
 **Behaviors**
