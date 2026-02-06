@@ -45,6 +45,17 @@ const registerSchema = z.object({
     redirectTo: z.string().optional(),
 });
 
+const updateSchema = z.object({
+    username: z.string().min(3).max(32),
+    email: z.string().email(),
+    redirectTo: z.string().optional(),
+});
+
+const passwordUpdateSchema = z.object({
+    password: z.string().min(8),
+    passwordConfirmation: z.string().min(8),
+});
+
 type AuthResponse = {
     token: string;
 };
@@ -164,6 +175,75 @@ export async function registerUser(
         secure: process.env.NODE_ENV === 'production',
         path: '/',
     });
+
+    redirect(parsed.data.redirectTo || '/home');
+}
+
+export async function updateUser(
+    _prevState: string | undefined,
+    formData: FormData,
+) {
+    const parsed = updateSchema.safeParse({
+        username: formData.get('username'),
+        email: formData.get('email'),
+        redirectTo: formData.get('redirectTo'),
+    });
+
+    if (!parsed.success) {
+        return 'Invalid update details.';
+    }
+
+    if (formData.get('password') !=="") {
+        const parsedPassword = passwordUpdateSchema.safeParse({
+            password: formData.get('password'),
+            passwordConfirmation: formData.get('passwordConfirmation'),
+        })
+    }
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+        return 'Unauthorized';
+    }
+
+    const userId = decodeToken(token).user_id;
+
+    let response: Response;
+    try {
+        const result = await fetchBackend(`/users/update/${user.user_id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: parsed.data.username,
+                email: parsed.data.email,
+                password: parsed.data.password,
+            }),
+            cache: 'no-store',
+        });
+        response = result.response;
+    } catch (error) {
+        console.error('Auth signup failed to reach backend', error);
+        return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+    }
+
+    if (!response.ok) {
+        if (response.status === 409) {
+            return 'Account already exists.';
+        }
+        if (response.status === 400) {
+            return 'Invalid signup details.';
+        }
+        if (response.status === 404) {
+            return 'Backend not found. Check BACKEND_URL.';
+        }
+        return 'Something went wrong.';
+    }
+
+    const data = (await response.json()) as AuthResponse;
+    if (!data?.token) {
+        return 'Something went wrong.';
+    }
 
     redirect(parsed.data.redirectTo || '/home');
 }
