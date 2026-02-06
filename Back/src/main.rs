@@ -30,8 +30,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .test_before_acquire(true)
         .connect(&config.database_url)
         .await?;
-
-    db::run_migrations(&pool).await?;
+    
 
     let jwt = JwtConfig::new(config.jwt_secret, config.jwt_exp_seconds);
     let state = AppState::new(pool, jwt);
