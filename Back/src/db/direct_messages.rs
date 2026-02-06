@@ -90,6 +90,34 @@ pub async fn list_messages(
     Ok(messages)
 }
 
+pub async fn list_messages_for_users(
+    pool: &PgPool,
+    user_a: Uuid,
+    user_b: Uuid,
+    limit: i64,
+    before: Option<DateTime<Utc>>,
+) -> Result<Vec<DirectMessage>, ApiError> {
+    let (user_a, user_b) = order_users(user_a, user_b);
+    let mut messages = sqlx::query_as::<_, DirectMessage>(
+        r#"SELECT dm.id, dm.conversation_id, dm.author_id, dm.content, dm.created_at
+        FROM direct_messages dm
+        JOIN direct_conversations dc ON dm.conversation_id = dc.id
+        WHERE dc.user_a = $1
+          AND dc.user_b = $2
+          AND ($3::timestamptz IS NULL OR dm.created_at < $3)
+        ORDER BY dm.created_at DESC
+        LIMIT $4"#,
+    )
+    .bind(user_a)
+    .bind(user_b)
+    .bind(before)
+    .bind(limit)
+    .fetch_all(pool)
+    .await?;
+    messages.reverse();
+    Ok(messages)
+}
+
 pub async fn create_message(
     pool: &PgPool,
     conversation_id: Uuid,

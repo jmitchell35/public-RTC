@@ -35,6 +35,24 @@ pub async fn list_friends(pool: &PgPool, user_id: Uuid) -> Result<Vec<UserPublic
     Ok(friends)
 }
 
+pub async fn get_friend(
+    pool: &PgPool,
+    user_id: Uuid,
+    friend_id: Uuid,
+) -> Result<Option<UserPublic>, ApiError> {
+    let friend = sqlx::query_as::<_, UserPublic>(
+        r#"SELECT u.id, u.username, u.friend_code, u.status
+        FROM friends f
+        JOIN users u ON u.id = f.friend_id
+        WHERE f.user_id = $1 AND f.friend_id = $2"#,
+    )
+    .bind(user_id)
+    .bind(friend_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(friend)
+}
+
 pub async fn list_incoming_requests(
     pool: &PgPool,
     user_id: Uuid,

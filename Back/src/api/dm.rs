@@ -47,10 +47,6 @@ pub async fn list_messages(
         return Err(ApiError::BadRequest("invalid friend".to_string()));
     }
 
-    if !db::friends::has_friendship(&state.db, user.user_id, friend_id).await? {
-        return Err(ApiError::Forbidden);
-    }
-
     let limit = query.limit.unwrap_or(50).clamp(1, 100);
     let before = match query.before.as_deref() {
         Some(raw) => {
@@ -62,42 +58,27 @@ pub async fn list_messages(
     };
 
     let started = Instant::now();
-    let friend = db::users::get_by_id(&state.db, friend_id)
+    let friend = db::friends::get_friend(&state.db, user.user_id, friend_id)
         .await?
-        .ok_or(ApiError::NotFound)?;
+        .ok_or(ApiError::Forbidden)?;
     log_db_timing("dm_friend_lookup", started, user.user_id, friend_id, None);
 
     let started = Instant::now();
-    let conversation =
-        db::direct_messages::get_conversation(&state.db, user.user_id, friend_id).await?;
+    let messages = db::direct_messages::list_messages_for_users(
+        &state.db,
+        user.user_id,
+        friend_id,
+        limit,
+        before,
+    )
+    .await?;
     log_db_timing(
-        "dm_conversation_lookup",
+        "dm_message_list",
         started,
         user.user_id,
         friend_id,
-        None,
+        Some(limit),
     );
-
-    let messages = if let Some(conversation) = conversation {
-        let started = Instant::now();
-        let messages = db::direct_messages::list_messages(
-            &state.db,
-            conversation.id,
-            limit,
-            before,
-        )
-        .await?;
-        log_db_timing(
-            "dm_message_list",
-            started,
-            user.user_id,
-            friend_id,
-            Some(limit),
-        );
-        messages
-    } else {
-        Vec::new()
-    };
 
     Ok(Json(DirectMessagesResponse {
         friend: UserPublic::from(&friend),
@@ -119,14 +100,10 @@ pub async fn send_message(
         return Err(ApiError::BadRequest("invalid friend".to_string()));
     }
 
-    if !db::friends::has_friendship(&state.db, user.user_id, friend_id).await? {
-        return Err(ApiError::Forbidden);
-    }
-
     let started = Instant::now();
-    let friend = db::users::get_by_id(&state.db, friend_id)
+    let friend = db::friends::get_friend(&state.db, user.user_id, friend_id)
         .await?
-        .ok_or(ApiError::NotFound)?;
+        .ok_or(ApiError::Forbidden)?;
     log_db_timing("dm_friend_lookup", started, user.user_id, friend_id, None);
 
     let started = Instant::now();
