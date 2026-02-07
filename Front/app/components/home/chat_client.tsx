@@ -7,6 +7,7 @@ import type { ChannelMessage, ServerMember } from "@/lib/types";
 
 type Props = {
     channelId: string;
+    channelName?: string;
     initialMessages: ChannelMessage[];
     members: ServerMember[];
     currentUserId: string;
@@ -29,13 +30,15 @@ function mergeMessages(
 
 export function ChatClient({
     channelId,
+    channelName,
     initialMessages,
     members,
     currentUserId,
 }: Props) {
     const ws = useHomeWs();
-    const [messages, setMessages] =
-        useState<ChannelMessage[]>(initialMessages);
+    const [messages, setMessages] = useState<ChannelMessage[]>(() =>
+        mergeMessages([], initialMessages),
+    );
     const [text, setText] = useState("");
     const [typingUsers, setTypingUsers] = useState<Set<string>>(
         () => new Set(),
@@ -56,6 +59,15 @@ export function ChatClient({
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages.length]);
+
+    useEffect(() => {
+        setMessages((prev) => {
+            const pending = prev.filter((message) =>
+                message.id.startsWith("temp-"),
+            );
+            return mergeMessages(pending, initialMessages);
+        });
+    }, [initialMessages]);
 
     const isConnected = ws?.isConnected ?? false;
 
@@ -340,6 +352,9 @@ export function ChatClient({
 
     return (
         <div className="home-chat">
+            {channelName ? (
+                <div className="home-chat-header"># {channelName}</div>
+            ) : null}
             <div className="home-chat-feed">
                 {messages.map((message) => {
                     const author =

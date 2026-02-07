@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 type Props = {
     servers: Array<{ id: string; name: string; icon: string; notif?: number }>;
@@ -10,7 +11,9 @@ type Props = {
 export function ServerBar({ servers, onAdd, onSelect, activeId }: Props) {
     return (
         <aside className="home-servers">
-            <div className="home-logo">Q</div>
+            <Link className="home-logo home-logo-btn" href="/home" aria-label="Home">
+                Q
+            </Link>
             <div className="home-divider" />
             <nav className="home-servers-list">
                 {servers.map((s) => (

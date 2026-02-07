@@ -48,6 +48,18 @@ input[type='number']::-webkit-outer-spin-button {
   font-size: 18px;
 }
 
+.home-logo-btn {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-logo-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+}
+
 .home-divider {
   width: 40px;
   height: 1px;
@@ -265,6 +277,21 @@ input[type='number']::-webkit-outer-spin-button {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.home-channel-btn.is-active {
+  background: #e0e7ff;
+  color: #312e81;
+}
+
+.home-channel-btn.is-active::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 999px;
+  background: #4f46e5;
+  display: inline-block;
+  margin-right: 6px;
+}
+
 .home-channel-btn:hover {
   background: #eef2ff;
   color: #4338ca;
@@ -335,6 +362,14 @@ input[type='number']::-webkit-outer-spin-button {
   display: flex;
   flex-direction: column;
   background: #f8fafc;
+}
+
+.home-chat-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .home-chat-feed {

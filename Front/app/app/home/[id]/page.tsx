@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { PrimaryButton, SecondaryButton } from "@/components/home/buttons";
+import { SecondaryButton } from "@/components/home/buttons";
 import { ChatClient } from "@/components/home/chat_client";
 import { useHomeWs } from "@/components/home/home-ws-provider";
 import type {
@@ -219,6 +219,10 @@ export default function ServerPage() {
         return <div style={{ padding: 24 }}>Serveur introuvable</div>;
     }
 
+    const activeChannel = channels.find(
+        (channel) => channel.id === activeChannelId,
+    );
+
     const handleCreateChannel = async () => {
         const name = prompt("Nom du salon");
         if (!name || !name.trim()) {
@@ -368,7 +372,6 @@ export default function ServerPage() {
                     ) : (
                         <SecondaryButton label="Quitter" onClick={handleLeaveServer} />
                     )}
-                    <PrimaryButton label="Profil" onClick={() => router.push("/profile")} />
                 </div>
             </header>
 
@@ -457,6 +460,7 @@ export default function ServerPage() {
                     <ChatClient
                         key={activeChannelId}
                         channelId={activeChannelId}
+                        channelName={activeChannel?.name ?? ""}
                         initialMessages={messages}
                         members={members}
                         currentUserId={me?.id ?? ""}
