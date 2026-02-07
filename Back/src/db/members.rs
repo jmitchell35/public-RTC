@@ -53,8 +53,8 @@ pub async fn list_members(
     pool: &PgPool,
     server_id: Uuid,
 ) -> Result<Vec<(Uuid, String, Role)>, ApiError> {
-    let rows = sqlx::query_as::<_, (Uuid, String, String)>(
-        r#"SELECT u.id, u.username, sm.role
+    let rows = sqlx::query_as::<_, (Uuid, String, String, String)>(
+        r#"SELECT u.id, u.username, u.status, sm.role
         FROM server_members sm
         JOIN users u ON u.id = sm.user_id
         WHERE sm.server_id = $1
@@ -66,7 +66,9 @@ pub async fn list_members(
 
     let members = rows
         .into_iter()
-        .filter_map(|(id, username, role)| Role::from_str(&role).ok().map(|r| (id, username, r)))
+        .filter_map(|(id, username, status, role)| {
+            Role::from_str(&role).ok().map(|r| (id, username, status, r))
+        })
         .collect();
     Ok(members)
 }
@@ -143,10 +145,11 @@ pub async fn list_members_with_status(
     let rows = list_members(pool, server_id).await?;
     let members = rows
         .into_iter()
-        .map(|(user_id, username, role)| MemberWithUser {
+        .map(|(user_id, username, status, role)| MemberWithUser {
             user_id,
             username,
             role,
+            status,
             online: online_checker(user_id),
         })
         .collect();

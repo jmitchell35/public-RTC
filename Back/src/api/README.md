@@ -128,6 +128,7 @@ Server management (create/list/get/update/delete) + members + roles + invites + 
 - `leave_server(...) -> Result<StatusCode, ApiError>`
 - `list_members(...) -> ApiResult<MembersResponse>`
 - `update_member_role(...) -> Result<StatusCode, ApiError>`
+- `remove_member(...) -> Result<StatusCode, ApiError>`
 - `create_invite(...) -> ApiResult<InviteResponse>`
 - `ensure_member(...) -> Result<Role, ApiError>`
 - `ensure_role(...) -> Result<Role, ApiError>`
@@ -140,6 +141,7 @@ Server management (create/list/get/update/delete) + members + roles + invites + 
 - `leave_server` prevents the owner from leaving.
 - `list_members` also returns online status via `PresenceState`.
 - `update_member_role` supports ownership transfer.
+- `remove_member` allows owners to expel members.
 - `create_invite` supports expiration and max_uses.
 
 **Errors**

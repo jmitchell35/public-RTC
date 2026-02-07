@@ -23,6 +23,7 @@ export type ServerMember = {
     user_id: string;
     username: string;
     role: 'owner' | 'admin' | 'member';
+    status: string;
     online: boolean;
 };
 

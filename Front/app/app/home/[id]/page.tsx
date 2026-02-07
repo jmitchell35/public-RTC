@@ -143,6 +143,7 @@ export default function ServerPage() {
                             ? {
                                   ...member,
                                   username: wsEvent.data.user.username,
+                                  status: wsEvent.data.user.status,
                                   online: true,
                               }
                             : member,
@@ -160,6 +161,12 @@ export default function ServerPage() {
                             : member,
                     ),
                 );
+            }
+            if (wsEvent.type === "ServerMembersUpdated") {
+                if (wsEvent.data.server_id !== serverId) {
+                    return;
+                }
+                refreshMembers().catch(() => {});
             }
         });
     }, [ws, serverId]);
@@ -561,13 +568,15 @@ export default function ServerPage() {
                                             </span>
                                         </div>
                                         <span
-                                            className={`home-member-status ${
+                                            className={`home-member-status home-member-status-${
                                                 member.online
-                                                    ? "home-member-status-online"
-                                                    : "home-member-status-offline"
+                                                    ? member.status || "online"
+                                                    : "offline"
                                             }`}
                                         >
-                                            {member.online ? "online" : "offline"}
+                                            {member.online
+                                                ? member.status || "online"
+                                                : "offline"}
                                         </span>
                                     </div>
                                 </div>

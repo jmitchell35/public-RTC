@@ -140,13 +140,13 @@ let reactions = reactions::list_for_message(&pool, message_id).await?;
 
 ## members.rs
 **Summary**
-Server members and roles management.
+Server members and roles management (including user status).
 
 **Functions**
 - `get_role(pool, server_id, user_id) -> Result<Option<Role>, ApiError>`
 - `add_member(pool, server_id, user_id, role) -> Result<(), ApiError>`
 - `remove_member(pool, server_id, user_id) -> Result<(), ApiError>`
-- `list_members(pool, server_id) -> Result<Vec<(Uuid, String, Role)>, ApiError>`
+- `list_members(pool, server_id) -> Result<Vec<(Uuid, String, String, Role)>, ApiError>`
 - `list_server_ids_for_user(pool, user_id) -> Result<Vec<Uuid>, ApiError>`
 - `update_role(pool, server_id, user_id, role) -> Result<(), ApiError>`
 - `transfer_ownership(pool, server_id, new_owner_id, previous_owner_id) -> Result<(), ApiError>`
@@ -154,7 +154,7 @@ Server members and roles management.
 
 **Behaviors**
 - `get_role` converts SQL string into `Role` enum.
-- `list_members` joins `users` to return usernames.
+- `list_members` joins `users` to return usernames and status.
 - `transfer_ownership` is transactional and downgrades previous owner to admin.
 - `list_members_with_status` injects online presence via callback.
 

@@ -669,6 +669,10 @@ input[type='number']::-webkit-outer-spin-button {
   color: #16a34a;
 }
 
+.home-member-status-dnd {
+  color: #f97316;
+}
+
 .home-member-status-offline {
   color: #94a3b8;
 }

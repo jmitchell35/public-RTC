@@ -162,6 +162,12 @@ async fn broadcast_status_update(
     state
         .ws_hub
         .broadcast_user(user.id, WsEvent::FriendStatusUpdated { user: user.clone() });
+    let server_ids = db::members::list_server_ids_for_user(&state.db, user.id).await?;
+    for server_id in server_ids {
+        state
+            .ws_hub
+            .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
+    }
     Ok(())
 }
 

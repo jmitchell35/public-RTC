@@ -31,6 +31,10 @@ export type WsEvent =
           data: { server_id: string; user_id: string };
       }
     | {
+          type: 'ServerMembersUpdated';
+          data: { server_id: string };
+      }
+    | {
           type: 'Notification';
           data: { server_id: string; content: string };
       }

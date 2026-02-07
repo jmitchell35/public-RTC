@@ -4,6 +4,7 @@ use crate::{
     models::{MemberWithUser, Role, Server},
     state::AppState,
     utils::{validation, ApiError, ApiResult},
+    ws::WsEvent,
 };
 use axum::{extract::{Path, State}, routing::{delete, get, post, put}, Extension, Json, Router};
 use chrono::{Duration, Utc};
@@ -149,6 +150,9 @@ pub async fn join_server(
         return Err(ApiError::Conflict("already a member".to_string()));
     }
     db::members::add_member(&state.db, server_id, user.user_id, Role::Member).await?;
+    state
+        .ws_hub
+        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -162,6 +166,12 @@ pub async fn join_by_invite(
         return Err(ApiError::Conflict("already a member".to_string()));
     }
     db::members::add_member(&state.db, invite.server_id, user.user_id, Role::Member).await?;
+    state.ws_hub.broadcast_server(
+        invite.server_id,
+        WsEvent::ServerMembersUpdated {
+            server_id: invite.server_id,
+        },
+    );
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -175,6 +185,17 @@ pub async fn leave_server(
         return Err(ApiError::BadRequest("owner cannot leave server".to_string()));
     }
     db::members::remove_member(&state.db, server_id, user.user_id).await?;
+    state.presence.set_online(server_id, user.user_id, false);
+    state.ws_hub.broadcast_server(
+        server_id,
+        WsEvent::UserDisconnected {
+            server_id,
+            user_id: user.user_id,
+        },
+    );
+    state
+        .ws_hub
+        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -207,9 +228,15 @@ pub async fn update_member_role(
             return Ok(axum::http::StatusCode::NO_CONTENT);
         }
         db::members::transfer_ownership(&state.db, server_id, target_user_id, user.user_id).await?;
+        state
+            .ws_hub
+            .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
         return Ok(axum::http::StatusCode::NO_CONTENT);
     }
     db::members::update_role(&state.db, server_id, target_user_id, payload.role).await?;
+    state
+        .ws_hub
+        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -231,6 +258,17 @@ pub async fn remove_member(
         return Err(ApiError::BadRequest("cannot remove owner".to_string()));
     }
     db::members::remove_member(&state.db, server_id, target_user_id).await?;
+    state.presence.set_online(server_id, target_user_id, false);
+    state.ws_hub.broadcast_server(
+        server_id,
+        WsEvent::UserDisconnected {
+            server_id,
+            user_id: target_user_id,
+        },
+    );
+    state
+        .ws_hub
+        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 

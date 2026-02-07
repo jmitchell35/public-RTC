@@ -86,6 +86,7 @@ async fn handle_socket(socket: WebSocket, state: AppState, user_id: Uuid) {
                         inbound,
                         &state,
                         user_id,
+                        &user_public,
                         &out_tx,
                         &mut server_tasks,
                         &mut channel_tasks,
@@ -137,6 +138,7 @@ async fn handle_inbound(
     inbound: WsInbound,
     state: &AppState,
     user_id: Uuid,
+    user_public: &UserPublic,
     out_tx: &mpsc::UnboundedSender<WsEvent>,
     server_tasks: &mut HashMap<Uuid, tokio::task::JoinHandle<()>>,
     channel_tasks: &mut HashMap<Uuid, tokio::task::JoinHandle<()>>,
@@ -162,6 +164,14 @@ async fn handle_inbound(
                 .is_some();
             if allowed {
                 subscribe_server(state.ws_hub.as_ref(), out_tx, server_id, server_tasks);
+                state.presence.set_online(server_id, user_id, true);
+                state.ws_hub.broadcast_server(
+                    server_id,
+                    WsEvent::UserConnected {
+                        server_id,
+                        user: user_public.clone(),
+                    },
+                );
             }
         }
         WsInbound::UnsubscribeServer { server_id } => {
@@ -362,6 +372,7 @@ mod tests {
             WsInbound::JoinChannel { channel_id: channel.id },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -376,6 +387,7 @@ mod tests {
             },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -405,6 +417,7 @@ mod tests {
             WsInbound::JoinChannel { channel_id: channel.id },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -419,6 +432,7 @@ mod tests {
             },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -452,6 +466,7 @@ mod tests {
             WsInbound::JoinChannel { channel_id: channel.id },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -466,6 +481,7 @@ mod tests {
             },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
@@ -492,6 +508,7 @@ mod tests {
             WsInbound::SubscribeServer { server_id: server.id },
             &state,
             user.id,
+            &UserPublic::from(&user),
             &out_tx,
             &mut server_tasks,
             &mut channel_tasks,
