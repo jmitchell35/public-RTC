@@ -38,6 +38,7 @@ export default function ServerPage() {
     const [activeChannelId, setActiveChannelId] = useState<string>("");
     const [me, setMe] = useState<MeResponse["user"] | null>(null);
     const [loading, setLoading] = useState(true);
+    const [messagesLoading, setMessagesLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [inviteCode, setInviteCode] = useState<string | null>(null);
     const [channelMenuId, setChannelMenuId] = useState<string | null>(null);
@@ -168,7 +169,23 @@ export default function ServerPage() {
         async function loadMessages() {
             if (!activeChannelId) {
                 setMessages([]);
+                setMessagesLoading(false);
                 return;
+            }
+            setMessagesLoading(true);
+            try {
+                if (typeof window !== "undefined") {
+                    const cacheKey = `channel:${activeChannelId}:messages`;
+                    const cached = sessionStorage.getItem(cacheKey);
+                    if (cached) {
+                        const parsed = JSON.parse(cached) as ChannelMessage[];
+                        if (!cancelled && Array.isArray(parsed)) {
+                            setMessages(parsed);
+                        }
+                    }
+                }
+            } catch {
+                // ignore cache errors
             }
             try {
                 const resp = await fetchJson<{ messages?: ChannelMessage[] }>(
@@ -176,11 +193,26 @@ export default function ServerPage() {
                 );
                 const list = (resp as any)?.messages ?? (resp as any);
                 if (!cancelled) {
-                    setMessages(Array.isArray(list) ? list : []);
+                    const messageList = Array.isArray(list) ? list : [];
+                    setMessages(messageList);
+                    try {
+                        if (typeof window !== "undefined") {
+                            sessionStorage.setItem(
+                                `channel:${activeChannelId}:messages`,
+                                JSON.stringify(messageList),
+                            );
+                        }
+                    } catch {
+                        // ignore cache errors
+                    }
                 }
             } catch (err: any) {
                 if (!cancelled) {
                     setError(err.message || "Erreur");
+                }
+            } finally {
+                if (!cancelled) {
+                    setMessagesLoading(false);
                 }
             }
         }
@@ -282,10 +314,12 @@ export default function ServerPage() {
             method: "DELETE",
         });
         if (res.ok) {
+            window.dispatchEvent(new Event("servers-refresh"));
             router.push("/home");
         } else {
             const text = await res.text();
             alert(`Quitter échoué (${res.status}) ${text}`);
+            window.dispatchEvent(new Event("servers-refresh"));
         }
     };
 
@@ -295,10 +329,12 @@ export default function ServerPage() {
         }
         const res = await fetch(`/api/servers/${serverId}`, { method: "DELETE" });
         if (res.ok) {
+            window.dispatchEvent(new Event("servers-refresh"));
             router.push("/home");
         } else {
             const text = await res.text();
             alert(`Suppression échouée (${res.status}) ${text}`);
+            window.dispatchEvent(new Event("servers-refresh"));
         }
     };
 
@@ -464,6 +500,7 @@ export default function ServerPage() {
                         initialMessages={messages}
                         members={members}
                         currentUserId={me?.id ?? ""}
+                        isLoading={messagesLoading}
                     />
 
                     <aside className="home-members">

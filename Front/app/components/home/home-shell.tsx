@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter, useSelectedLayoutSegment } from 'next/navigation';
+import { usePathname, useRouter, useSelectedLayoutSegment } from 'next/navigation';
 import { ServerBar } from '@/components/home/server_bar';
 import { useHomeWs } from '@/components/home/home-ws-provider';
 
@@ -11,6 +11,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
     const router = useRouter();
     const segment = useSelectedLayoutSegment();
     const activeId = segment && segment !== 'dm' ? segment : undefined;
+    const pathname = usePathname();
     const ws = useHomeWs();
     const isConnected = ws?.isConnected ?? false;
 
@@ -49,6 +50,16 @@ export default function HomeShell({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         fetchServers();
+    }, [fetchServers, pathname]);
+
+    useEffect(() => {
+        const handler = () => {
+            fetchServers();
+        };
+        window.addEventListener('servers-refresh', handler);
+        return () => {
+            window.removeEventListener('servers-refresh', handler);
+        };
     }, [fetchServers]);
 
     useEffect(() => {

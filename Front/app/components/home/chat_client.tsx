@@ -11,6 +11,7 @@ type Props = {
     initialMessages: ChannelMessage[];
     members: ServerMember[];
     currentUserId: string;
+    isLoading?: boolean;
 };
 
 const TYPING_IDLE_MS = 1400;
@@ -34,6 +35,7 @@ export function ChatClient({
     initialMessages,
     members,
     currentUserId,
+    isLoading = false,
 }: Props) {
     const ws = useHomeWs();
     const [messages, setMessages] = useState<ChannelMessage[]>(() =>
@@ -68,6 +70,21 @@ export function ChatClient({
             return mergeMessages(pending, initialMessages);
         });
     }, [initialMessages]);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || !channelId) {
+            return;
+        }
+        try {
+            const limited = messages.slice(-50);
+            sessionStorage.setItem(
+                `channel:${channelId}:messages`,
+                JSON.stringify(limited),
+            );
+        } catch {
+            // ignore cache errors
+        }
+    }, [channelId, messages]);
 
     const isConnected = ws?.isConnected ?? false;
 
@@ -356,6 +373,20 @@ export function ChatClient({
                 <div className="home-chat-header"># {channelName}</div>
             ) : null}
             <div className="home-chat-feed">
+                {isLoading ? (
+                    <div className="home-chat-loading">
+                        <div className="home-chat-spinner" />
+                        <span>Chargement des messages...</span>
+                    </div>
+                ) : null}
+                {isLoading && messages.length === 0 ? (
+                    <div className="home-chat-skeleton">
+                        <span />
+                        <span />
+                        <span />
+                        <span />
+                    </div>
+                ) : null}
                 {messages.map((message) => {
                     const author =
                         memberMap.get(message.author_id) ?? "Unknown";
