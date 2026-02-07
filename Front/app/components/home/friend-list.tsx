@@ -63,7 +63,7 @@ export default function FriendList({
                         return (
                             <Link
                                 key={friend.id}
-                                href={`/home/${friend.id}`}
+                                href={`/home/dm/${friend.id}`}
                                 onClick={() => onOpenFriend?.(friend.id)}
                                 onMouseEnter={() =>
                                     prefetchConversation(friend.id)

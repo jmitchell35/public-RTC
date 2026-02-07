@@ -28,3 +28,27 @@ export async function GET(
     return NextResponse.json({ error: text || "unknown" }, { status: response.status });
   }
 }
+
+export async function POST(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  const params = await Promise.resolve(context.params);
+  const headers = authHeaders(req);
+  if (!headers) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const payload = await req.json();
+  const { response } = await fetchBackend(`/channels/${params.id}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await response.text();
+  try {
+    const json = JSON.parse(text);
+    return NextResponse.json(json, { status: response.status });
+  } catch {
+    return NextResponse.json({ error: text || "unknown" }, { status: response.status });
+  }
+}

@@ -448,7 +448,7 @@ export default function HomeClient({
                         </div>
                         <div className="flex items-center gap-2">
                             <Link
-                                href={`/home/${notificationFriend.id}`}
+                                href={`/home/dm/${notificationFriend.id}`}
                                 onClick={() => {
                                     handleOpenFriend(notificationFriend.id);
                                     setLastNotification(null);

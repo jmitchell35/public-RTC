@@ -40,6 +40,8 @@ export default function ServerPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [inviteCode, setInviteCode] = useState<string | null>(null);
+    const [channelMenuId, setChannelMenuId] = useState<string | null>(null);
+    const [showRoleModal, setShowRoleModal] = useState(false);
 
     const myRole = useMemo(() => {
         if (!me) {
@@ -239,12 +241,32 @@ export default function ServerPage() {
         if (!confirm("Supprimer ce salon ?")) {
             return;
         }
+        setChannelMenuId(null);
         const res = await fetch(`/api/channels/${channelId}`, { method: "DELETE" });
         if (res.ok) {
             await refreshChannels();
         } else {
             const text = await res.text();
             alert(`Suppression échouée (${res.status}) ${text}`);
+        }
+    };
+
+    const handleRenameChannel = async (channelId: string) => {
+        const name = prompt("Nouveau nom du salon");
+        if (!name || !name.trim()) {
+            return;
+        }
+        setChannelMenuId(null);
+        const res = await fetch(`/api/channels/${channelId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name.trim() }),
+        });
+        if (res.ok) {
+            await refreshChannels();
+        } else {
+            const text = await res.text();
+            alert(`Modification échouée (${res.status}) ${text}`);
         }
     };
 
@@ -326,6 +348,12 @@ export default function ServerPage() {
                     </div>
                 </div>
                 <div className="home-header-actions">
+                    {isOwner ? (
+                        <SecondaryButton
+                            label="Roles"
+                            onClick={() => setShowRoleModal(true)}
+                        />
+                    ) : null}
                     {canInvite ? (
                         <button
                             className="home-btn home-btn-secondary"
@@ -370,13 +398,55 @@ export default function ServerPage() {
                                     <span>{channel.name}</span>
                                 </button>
                                 {canManageChannels ? (
-                                    <button
-                                        className="home-channel-delete"
-                                        onClick={() => handleDeleteChannel(channel.id)}
-                                        title="Supprimer"
+                                    <div
+                                        className="home-channel-menu"
+                                        onMouseLeave={() =>
+                                            setChannelMenuId((prev) =>
+                                                prev === channel.id ? null : prev,
+                                            )
+                                        }
                                     >
-                                        ×
-                                    </button>
+                                        <button
+                                            className="home-channel-menu-btn"
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                setChannelMenuId((prev) =>
+                                                    prev === channel.id
+                                                        ? null
+                                                        : channel.id,
+                                                );
+                                            }}
+                                            title="Actions"
+                                        >
+                                            ⋮
+                                        </button>
+                                        {channelMenuId === channel.id ? (
+                                            <div className="home-channel-menu-popover">
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        handleRenameChannel(
+                                                            channel.id,
+                                                        );
+                                                    }}
+                                                >
+                                                    Renommer
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        handleDeleteChannel(
+                                                            channel.id,
+                                                        );
+                                                    }}
+                                                >
+                                                    Supprimer
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
                                 ) : null}
                             </div>
                         ))}
@@ -414,9 +484,58 @@ export default function ServerPage() {
                                             {member.online ? " • online" : " • offline"}
                                         </span>
                                     </div>
+                                </div>
+                            ))}
+                        </div>
+                    </aside>
+                </main>
+            </div>
+
+            {showRoleModal ? (
+                <div
+                    className="home-modal-backdrop"
+                    onClick={() => setShowRoleModal(false)}
+                >
+                    <div
+                        className="home-modal-card"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="home-modal-header">
+                            <div>
+                                <h3 className="home-modal-title">Roles du serveur</h3>
+                                <p className="home-modal-subtitle">
+                                    Définissez les permissions des membres.
+                                </p>
+                            </div>
+                            <button
+                                className="home-modal-close"
+                                onClick={() => setShowRoleModal(false)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="home-modal-body">
+                            {members.map((member) => (
+                                <div
+                                    key={member.user_id}
+                                    className="home-role-row"
+                                >
+                                    <div className="home-role-user">
+                                        <div className="home-member-avatar">
+                                            {member.username[0]?.toUpperCase() ?? "U"}
+                                        </div>
+                                        <div>
+                                            <div className="home-member-name">
+                                                {member.username}
+                                            </div>
+                                            <div className="home-member-role">
+                                                {member.role}
+                                            </div>
+                                        </div>
+                                    </div>
                                     {isOwner && member.user_id !== me?.id ? (
                                         <select
-                                            className="home-member-role-select"
+                                            className="home-role-select"
                                             value={member.role}
                                             onChange={(event) =>
                                                 handleRoleUpdate(
@@ -429,13 +548,25 @@ export default function ServerPage() {
                                             <option value="admin">admin</option>
                                             <option value="owner">owner</option>
                                         </select>
-                                    ) : null}
+                                    ) : (
+                                        <span className="home-role-pill">
+                                            {member.role}
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
-                    </aside>
-                </main>
-            </div>
+                        <div className="home-modal-footer">
+                            <button
+                                className="home-btn home-btn-secondary"
+                                onClick={() => setShowRoleModal(false)}
+                            >
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 }

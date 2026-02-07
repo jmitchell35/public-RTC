@@ -10,7 +10,7 @@ type Server = { id: string; name: string; icon: string; notif?: number };
 export default function HomeShell({ children }: { children: ReactNode }) {
     const router = useRouter();
     const segment = useSelectedLayoutSegment();
-    const activeId = segment ?? undefined;
+    const activeId = segment && segment !== 'dm' ? segment : undefined;
     const ws = useHomeWs();
     const isConnected = ws?.isConnected ?? false;
 

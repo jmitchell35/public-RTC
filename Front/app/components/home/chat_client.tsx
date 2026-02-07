@@ -203,6 +203,45 @@ export function ChatClient({
                 type: "SendMessage",
                 data: { channel_id: channelId, content },
             });
+            window.setTimeout(async () => {
+                const stillPending = pendingRef.current.some(
+                    (pending) => pending.id === tempId,
+                );
+                if (!stillPending) {
+                    return;
+                }
+                try {
+                    const res = await fetch(
+                        `/api/channels/${channelId}/messages`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ content }),
+                        },
+                    );
+                    if (!res.ok) {
+                        setActionError("Failed to send message.");
+                        return;
+                    }
+                    const data = (await res.json()) as {
+                        message?: ChannelMessage;
+                    };
+                    if (data?.message) {
+                        pendingRef.current = pendingRef.current.filter(
+                            (pending) => pending.id !== tempId,
+                        );
+                        setMessages((prev) =>
+                            mergeMessages(
+                                prev.filter((item) => item.id !== tempId),
+                                [data.message],
+                            ),
+                        );
+                    }
+                } catch (error) {
+                    console.error("Fallback send failed", error);
+                    setActionError("Backend unreachable.");
+                }
+            }, 2000);
             return;
         }
 
@@ -214,6 +253,19 @@ export function ChatClient({
             });
             if (!res.ok) {
                 setActionError("Failed to send message.");
+                return;
+            }
+            const data = (await res.json()) as { message?: ChannelMessage };
+            if (data?.message) {
+                pendingRef.current = pendingRef.current.filter(
+                    (pending) => pending.id !== tempId,
+                );
+                setMessages((prev) =>
+                    mergeMessages(
+                        prev.filter((item) => item.id !== tempId),
+                        [data.message],
+                    ),
+                );
             }
         } catch (error) {
             console.error("Send message failed", error);

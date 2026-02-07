@@ -90,6 +90,6 @@ export async function sendDirectMessage(
         return 'Backend unreachable. Start the backend and check BACKEND_URL.';
     }
 
-    revalidatePath(`/home/${parsed.data.friendId}`);
+    revalidatePath(`/home/dm/${parsed.data.friendId}`);
     return undefined;
 }
