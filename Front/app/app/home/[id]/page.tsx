@@ -241,11 +241,15 @@ export default function ServerPage() {
     };
 
     const refreshMembers = async () => {
-        const resp = await fetchJson<{ members: ServerMember[] }>(
-            `/api/servers/${serverId}/members`
-        );
-        const memberList = (resp as any)?.members ?? (resp as any);
-        setMembers(memberList);
+        try {
+            const resp = await fetchJson<{ members: ServerMember[] }>(
+                `/api/servers/${serverId}/members`
+            );
+            const memberList = (resp as any)?.members ?? (resp as any);
+            setMembers(memberList);
+        } catch (error) {
+            console.warn("refreshMembers failed", error);
+        }
     };
 
     if (loading) {
@@ -384,16 +388,21 @@ export default function ServerPage() {
     };
 
     const handleRoleUpdate = async (userId: string, role: string) => {
-        const res = await fetch(`/api/servers/${serverId}/members/${userId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role }),
-        });
-        if (res.ok) {
-            await refreshMembers();
-        } else {
+        try {
+            const res = await fetch(`/api/servers/${serverId}/members/${userId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role }),
+            });
+            if (res.ok || res.status === 502) {
+                await refreshMembers();
+                return;
+            }
             const text = await res.text();
             alert(`Changement échoué (${res.status}) ${text}`);
+        } catch (error) {
+            console.error("Role update failed", error);
+            alert("Changement échoué (backend indisponible)");
         }
     };
 
@@ -401,14 +410,19 @@ export default function ServerPage() {
         if (!window.confirm("Expulser ce membre du serveur ?")) {
             return;
         }
-        const res = await fetch(`/api/servers/${serverId}/members/${userId}`, {
-            method: "DELETE",
-        });
-        if (res.ok) {
-            await refreshMembers();
-        } else {
+        try {
+            const res = await fetch(`/api/servers/${serverId}/members/${userId}`, {
+                method: "DELETE",
+            });
+            if (res.ok || res.status === 502) {
+                await refreshMembers();
+                return;
+            }
             const text = await res.text();
             alert(`Expulsion échouée (${res.status}) ${text}`);
+        } catch (error) {
+            console.error("Kick member failed", error);
+            alert("Expulsion échouée (backend indisponible)");
         }
     };
 
