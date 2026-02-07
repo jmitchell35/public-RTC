@@ -287,6 +287,49 @@ export async function updateUser(
     redirect(parsed.data.redirectTo || '/home');
 }
 
+export async function deleteAccount(
+    _prevState: string | undefined,
+    formData: FormData,
+) {
+    const redirectTo = String(formData.get('redirectTo') ?? '/login');
+    let meResponse: Response;
+    try {
+        meResponse = await authFetch('/me', { method: 'GET' });
+    } catch (error) {
+        console.error('Profile lookup failed', error);
+        return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+    }
+
+    if (!meResponse.ok) {
+        return 'Unauthorized';
+    }
+
+    const meData = (await meResponse.json()) as { user: { id: string } };
+    const userId = meData?.user?.id;
+    if (!userId) {
+        return 'Unauthorized';
+    }
+
+    let response: Response;
+    try {
+        response = await authFetch(`/users/${userId}`, {
+            method: 'DELETE',
+        });
+    } catch (error) {
+        console.error('Account deletion failed', error);
+        return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+    }
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        return errorBody?.error ?? 'Something went wrong.';
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.delete('auth_token');
+    redirect(redirectTo || '/login');
+}
+
 export async function fetchProfile(): Promise<UserProfile | null> {
     let meResponse: Response;
     try {

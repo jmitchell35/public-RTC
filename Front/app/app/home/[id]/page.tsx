@@ -8,6 +8,7 @@ import { useHomeWs } from "@/components/home/home-ws-provider";
 import type {
     Channel,
     ChannelMessage,
+    FriendRequestsResponse,
     Server,
     ServerMember,
     UserPublic,
@@ -43,6 +44,12 @@ export default function ServerPage() {
     const [inviteCode, setInviteCode] = useState<string | null>(null);
     const [channelMenuId, setChannelMenuId] = useState<string | null>(null);
     const [showRoleModal, setShowRoleModal] = useState(false);
+    const [friends, setFriends] = useState<UserPublic[]>([]);
+    const [friendRequests, setFriendRequests] = useState<FriendRequestsResponse>({
+        incoming: [],
+        outgoing: [],
+    });
+    const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
 
     const myRole = useMemo(() => {
         if (!me) {
@@ -57,6 +64,25 @@ export default function ServerPage() {
     const canInvite = myRole === "owner" || myRole === "admin";
     const isOwner = myRole === "owner";
 
+    const friendIds = useMemo(
+        () => new Set(friends.map((friend) => friend.id)),
+        [friends],
+    );
+    const outgoingRequestIds = useMemo(
+        () =>
+            new Set(
+                friendRequests.outgoing.map((request) => request.user.id),
+            ),
+        [friendRequests],
+    );
+    const incomingRequestIds = useMemo(
+        () =>
+            new Set(
+                friendRequests.incoming.map((request) => request.user.id),
+            ),
+        [friendRequests],
+    );
+
     useEffect(() => {
         let cancelled = false;
         async function load() {
@@ -68,23 +94,45 @@ export default function ServerPage() {
             setLoading(true);
             setError(null);
             try {
-                    const [meResp, serverResp, channelsResp, membersResp] =
+                const [meResp, serverResp, channelsResp, membersResp] =
                     await Promise.all([
                         fetchJson<MeResponse>("/api/me"),
                         fetchJson<{ server: Server }>(`/api/servers/${serverId}`),
                         fetchJson<{ channels: Channel[] }>(
                             `/api/servers/${serverId}/channels`
                         ),
-                        fetchJson<{ members: Member[] }>(
+                        fetchJson<{ members: ServerMember[] }>(
                             `/api/servers/${serverId}/members`
                         ),
                     ]);
+
+                let friendsResp: { friends?: UserPublic[] } = {};
+                let requestsResp: FriendRequestsResponse = {
+                    incoming: [],
+                    outgoing: [],
+                };
+                try {
+                    friendsResp = await fetchJson<{ friends: UserPublic[] }>(
+                        "/api/friends",
+                    );
+                } catch (error) {
+                    console.warn("friends load failed", error);
+                }
+                try {
+                    requestsResp = await fetchJson<FriendRequestsResponse>(
+                        "/api/friends/requests",
+                    );
+                } catch (error) {
+                    console.warn("friend requests load failed", error);
+                }
 
                 const serverData = (serverResp as any)?.server ?? serverResp;
                 const channelList =
                     (channelsResp as any)?.channels ?? (channelsResp as any);
                 const memberList =
                     (membersResp as any)?.members ?? (membersResp as any);
+                const friendList =
+                    (friendsResp as any)?.friends ?? (friendsResp as any) ?? [];
 
                 if (!cancelled) {
                     setMe(meResp.user);
@@ -92,6 +140,8 @@ export default function ServerPage() {
                     setChannels(channelList);
                     setMembers(memberList);
                     setActiveChannelId(channelList[0]?.id ?? "");
+                    setFriends(friendList);
+                    setFriendRequests(requestsResp);
                 }
             } catch (err: any) {
                 if (!cancelled) {
@@ -426,6 +476,38 @@ export default function ServerPage() {
         }
     };
 
+    const handleAddFriend = async (member: ServerMember) => {
+        if (!member.friend_code || addingFriendId) {
+            return;
+        }
+        setAddingFriendId(member.user_id);
+        try {
+            const res = await fetch("/api/friends/requests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ friend_code: member.friend_code }),
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                alert(`Demande échouée (${res.status}) ${text}`);
+                return;
+            }
+            const data = await res.json().catch(() => null);
+            const request = data?.request;
+            if (request) {
+                setFriendRequests((prev) => ({
+                    ...prev,
+                    outgoing: [...prev.outgoing, request],
+                }));
+            }
+        } catch (error) {
+            console.error("Add friend failed", error);
+            alert("Demande échouée (backend indisponible)");
+        } finally {
+            setAddingFriendId(null);
+        }
+    };
+
     return (
         <>
             <header className="home-header">
@@ -593,6 +675,20 @@ export default function ServerPage() {
                                                 : "offline"}
                                         </span>
                                     </div>
+                                    {member.user_id !== me?.id &&
+                                    !friendIds.has(member.user_id) &&
+                                    !outgoingRequestIds.has(member.user_id) &&
+                                    !incomingRequestIds.has(member.user_id) ? (
+                                        <button
+                                            className="home-member-add"
+                                            type="button"
+                                            onClick={() => handleAddFriend(member)}
+                                            disabled={addingFriendId === member.user_id}
+                                            title="Ajouter en ami"
+                                        >
+                                            +
+                                        </button>
+                                    ) : null}
                                 </div>
                             ))}
                         </div>

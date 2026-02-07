@@ -119,6 +119,7 @@ pub struct MemberWithUser {
     pub username: String,
     pub role: Role,
     pub status: String,
+    pub friend_code: String,
     pub online: bool,
 }
 

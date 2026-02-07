@@ -24,6 +24,7 @@ export type ServerMember = {
     username: string;
     role: 'owner' | 'admin' | 'member';
     status: string;
+    friend_code: string;
     online: boolean;
 };
 

@@ -10,7 +10,7 @@ import {
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { UpdateButton } from '@/components/profile/update-button';
 import { useActionState } from 'react';
-import { updateUser } from '@/lib/actions';
+import { deleteAccount, updateUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
 
@@ -23,6 +23,10 @@ export default function ProfileForm({
     const callbackUrl = searchParams.get('callbackUrl') || '/home';
     const [errorMessage, formAction, isPending] = useActionState(
         updateUser,
+        undefined,
+    );
+    const [deleteError, deleteAction, isDeleting] = useActionState(
+        deleteAccount,
         undefined,
     );
 
@@ -40,8 +44,9 @@ export default function ProfileForm({
     }
 
     return (
-        <form action={formAction} className="space-y-3">
-            <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
+        <div className="space-y-3">
+            <form action={formAction}>
+                <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
                 <h1 className={`${lusitana.className} mb-3 text-2xl`}>
                     Your profile.
                 </h1>
@@ -167,7 +172,32 @@ export default function ProfileForm({
                         </>
                     )}
                 </div>
-            </div>
-        </form>
+                </div>
+            </form>
+            <form
+                action={deleteAction}
+                onSubmit={(event) => {
+                    if (
+                        !window.confirm(
+                            'Supprimer définitivement votre compte ?',
+                        )
+                    ) {
+                        event.preventDefault();
+                    }
+                }}
+            >
+                <input type="hidden" name="redirectTo" value="/login" />
+                <button
+                    type="submit"
+                    disabled={isDeleting}
+                    className="w-full rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    Supprimer mon compte
+                </button>
+                {deleteError ? (
+                    <p className="mt-2 text-sm text-red-500">{deleteError}</p>
+                ) : null}
+            </form>
+        </div>
     );
 }

@@ -606,6 +606,31 @@ input[type='number']::-webkit-outer-spin-button {
   background: #f8fafc;
 }
 
+.home-member-add {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s ease, border 0.15s ease;
+}
+
+.home-member-add:hover {
+  background: #e2e8f0;
+  border-color: #cbd5f5;
+}
+
+.home-member-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .home-member-avatar {
   width: 32px;
   height: 32px;
