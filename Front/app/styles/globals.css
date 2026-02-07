@@ -622,6 +622,57 @@ input[type='number']::-webkit-outer-spin-button {
   color: #0f172a;
 }
 
+.home-member-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-member-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-member-role {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.home-member-role-owner {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.home-member-role-admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.home-member-role-member {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.home-member-status {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.home-member-status-online {
+  color: #16a34a;
+}
+
+.home-member-status-offline {
+  color: #94a3b8;
+}
+
 .home-btn {
   border: none;
   border-radius: 12px;
@@ -738,6 +789,27 @@ input[type='number']::-webkit-outer-spin-button {
   padding: 6px 10px;
   font-size: 13px;
   background: #fff;
+}
+
+.home-role-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-role-kick {
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-role-kick:hover {
+  background: #fecaca;
 }
 
 .home-role-pill {

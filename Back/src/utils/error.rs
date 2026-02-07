@@ -68,4 +68,22 @@ mod tests {
         let response = err.into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
+
+    #[test]
+    fn maps_other_statuses() {
+        let response = ApiError::Unauthorized.into_response();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        let response = ApiError::Forbidden.into_response();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+
+        let response = ApiError::NotFound.into_response();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+        let response = ApiError::Conflict("exists".to_string()).into_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+
+        let response = ApiError::Internal.into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
 }

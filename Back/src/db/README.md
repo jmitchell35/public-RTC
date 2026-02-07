@@ -7,13 +7,13 @@ PostgreSQL access layer with SQLx. Each file exposes async functions returning `
 Exports DB submodules and runs migrations.
 
 **Functions**
-- `run_migrations(pool: &PgPool) -> Result<(), sqlx::Error>`
+- `run_migrations(pool: &PgPool) -> Result<(), sqlx::migrate::MigrateError>`
 
 **Behaviors**
 - Executes migrations in `./migrations` via `sqlx::migrate!()`.
 
 **Errors**
-- Propagates `sqlx::Error` on migration failure.
+- Propagates `sqlx::migrate::MigrateError` on migration failure.
 
 **Example**
 ```rust
@@ -22,17 +22,21 @@ db::run_migrations(&pool).await?;
 
 ## users.rs
 **Summary**
-User creation and reads.
+User creation, reads, and profile updates.
 
 **Functions**
 - `create(pool, username, email, password_hash) -> Result<User, ApiError>`
 - `find_by_email_or_username(pool, identifier) -> Result<Option<User>, ApiError>`
 - `get_by_id(pool, user_id) -> Result<Option<User>, ApiError>`
+- `find_by_friend_code(pool, friend_code) -> Result<Option<User>, ApiError>`
+- `set_status(pool, user_id, status) -> Result<(), ApiError>`
+- `update_profile(pool, user_id, username?, email?, password_hash?) -> Result<Option<User>, ApiError>`
 
 **Behaviors**
-- `create` generates a UUID and inserts into `users`.
+- `create` generates a UUID and friend code, then inserts into `users`.
 - `find_by_email_or_username` searches by `email` OR `username`.
 - `get_by_id` returns `None` if not found.
+- `update_profile` only updates provided fields (COALESCE).
 
 **Errors**
 - `ApiError::Conflict` on unique violations (email/username).

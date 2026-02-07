@@ -18,3 +18,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function DELETE(_request: Request, { params }: RouteParams) {
+    const { id } = await params;
+    return forwardBackend(`/users/${id}`, { method: 'DELETE' });
+}

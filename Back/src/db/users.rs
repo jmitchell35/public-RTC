@@ -107,3 +107,11 @@ pub async fn update_profile(
     .await?;
     Ok(user)
 }
+
+pub async fn delete(pool: &PgPool, user_id: Uuid) -> Result<bool, ApiError> {
+    let result = sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}

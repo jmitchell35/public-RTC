@@ -1,5 +1,5 @@
 use crate::{
-    auth::{hash_password, verify_password, AuthUser},
+    auth::{extract_bearer_token, hash_password, verify_password, AuthUser},
     db,
     models::{User, UserPublic},
     state::AppState,
@@ -8,7 +8,8 @@ use crate::{
 };
 use axum::{
     extract::{Path, State},
-    routing::get,
+    http::HeaderMap,
+    routing::{delete, get, put},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -39,7 +40,10 @@ pub struct UserProfileResponse {
 }
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/users/{id}", get(get_profile).put(update_profile))
+    Router::new().route(
+        "/users/{id}",
+        get(get_profile).put(update_profile).delete(delete_profile),
+    )
 }
 
 pub async fn get_profile(
@@ -120,6 +124,35 @@ pub async fn update_profile(
     Ok(Json(UserProfileResponse {
         user: UserProfile::from(&updated),
     }))
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeleteProfileResponse {
+    pub deleted: bool,
+}
+
+pub async fn delete_profile(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(user_id): Path<Uuid>,
+    headers: HeaderMap,
+) -> ApiResult<DeleteProfileResponse> {
+    if user.user_id != user_id {
+        return Err(ApiError::Forbidden);
+    }
+
+    if let Some(token) = extract_bearer_token(&headers) {
+        if let Ok(claims) = state.jwt.decode_token(&token) {
+            let _ = db::tokens::revoke(&state.db, &claims.jti).await;
+        }
+    }
+
+    let deleted = db::users::delete(&state.db, user_id).await?;
+    if !deleted {
+        return Err(ApiError::NotFound);
+    }
+
+    Ok(Json(DeleteProfileResponse { deleted: true }))
 }
 
 fn normalize_optional(value: Option<String>) -> Option<String> {

@@ -36,4 +36,26 @@ mod tests {
         assert!(!validate_password("short"));
         assert!(validate_password("long_enough"));
     }
+
+    #[test]
+    fn validates_server_name() {
+        assert!(validate_server_name("ab"));
+        assert!(!validate_server_name("a"));
+        assert!(!validate_server_name(&"x".repeat(65)));
+    }
+
+    #[test]
+    fn validates_channel_name() {
+        assert!(validate_channel_name("general"));
+        assert!(!validate_channel_name("x"));
+        assert!(!validate_channel_name(&"x".repeat(65)));
+    }
+
+    #[test]
+    fn validates_status() {
+        assert!(validate_user_status("online"));
+        assert!(validate_user_status("offline"));
+        assert!(validate_user_status("dnd"));
+        assert!(!validate_user_status("away"));
+    }
 }

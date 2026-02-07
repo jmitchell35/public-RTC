@@ -175,4 +175,25 @@ mod tests {
         presence.set_online(server, user, false);
         assert!(!presence.is_online(server, user));
     }
+
+    #[tokio::test]
+    async fn channel_broadcast_delivers_event() {
+        let hub = WsHub::new();
+        let channel_id = Uuid::new_v4();
+        let mut rx = hub.channel_sender(channel_id).subscribe();
+
+        hub.broadcast_channel(
+            channel_id,
+            WsEvent::Notification {
+                server_id: Uuid::nil(),
+                content: "test".to_string(),
+            },
+        );
+
+        let event = rx.recv().await.expect("receive event");
+        match event {
+            WsEvent::Notification { content, .. } => assert_eq!(content, "test"),
+            other => panic!("unexpected event: {other:?}"),
+        }
+    }
 }

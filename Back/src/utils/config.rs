@@ -27,3 +27,71 @@ impl Config {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    fn set_var(key: &str, value: Option<&str>) -> Option<String> {
+        let previous = env::var(key).ok();
+        match value {
+            Some(value) => unsafe { env::set_var(key, value) },
+            None => unsafe { env::remove_var(key) },
+        }
+        previous
+    }
+
+    fn restore_var(key: &str, value: Option<String>) {
+        match value {
+            Some(value) => unsafe { env::set_var(key, value) },
+            None => unsafe { env::remove_var(key) },
+        }
+    }
+
+    #[test]
+    fn config_reads_env_values() {
+        let _guard = env_lock().lock().unwrap();
+        let prev_db = set_var("DATABASE_URL", Some("postgres://example/db"));
+        let prev_secret = set_var("JWT_SECRET", Some("test-secret"));
+        let prev_exp = set_var("JWT_EXP_SECONDS", Some("123"));
+        let prev_bind = set_var("BIND_ADDR", Some("127.0.0.1:9999"));
+
+        let config = Config::from_env();
+
+        assert_eq!(config.database_url, "postgres://example/db");
+        assert_eq!(config.jwt_secret, "test-secret");
+        assert_eq!(config.jwt_exp_seconds, 123);
+        assert_eq!(config.bind_addr, "127.0.0.1:9999");
+
+        restore_var("DATABASE_URL", prev_db);
+        restore_var("JWT_SECRET", prev_secret);
+        restore_var("JWT_EXP_SECONDS", prev_exp);
+        restore_var("BIND_ADDR", prev_bind);
+    }
+
+    #[test]
+    fn config_uses_defaults() {
+        let _guard = env_lock().lock().unwrap();
+        let prev_db = set_var("DATABASE_URL", Some("postgres://example/db"));
+        let prev_secret = set_var("JWT_SECRET", None);
+        let prev_exp = set_var("JWT_EXP_SECONDS", None);
+        let prev_bind = set_var("BIND_ADDR", None);
+
+        let config = Config::from_env();
+
+        assert_eq!(config.jwt_secret, "dev-secret");
+        assert_eq!(config.jwt_exp_seconds, 60 * 60 * 24 * 7);
+        assert_eq!(config.bind_addr, "0.0.0.0:3001");
+
+        restore_var("DATABASE_URL", prev_db);
+        restore_var("JWT_SECRET", prev_secret);
+        restore_var("JWT_EXP_SECONDS", prev_exp);
+        restore_var("BIND_ADDR", prev_bind);
+    }
+}

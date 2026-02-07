@@ -30,6 +30,7 @@ Assembles public and protected routes. Applies JWT middleware to protected route
   - `DELETE /dm/messages/{message_id}`
   - `GET /users/{id}`
   - `PUT /users/{id}`
+  - `DELETE /users/{id}`
   - all `servers`, `channels`, `messages` routes
 
 **Errors**

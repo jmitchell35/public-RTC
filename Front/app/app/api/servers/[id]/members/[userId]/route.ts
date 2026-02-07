@@ -15,3 +15,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function DELETE(_request: Request, { params }: RouteParams) {
+    const { id, userId } = await params;
+    return forwardBackend(`/servers/${id}/members/${userId}`, {
+        method: 'DELETE',
+    });
+}

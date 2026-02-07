@@ -1,3 +1,5 @@
+use sqlx::PgPool;
+
 pub mod channels;
 pub mod direct_messages;
 pub mod friends;
@@ -8,6 +10,10 @@ pub mod reactions;
 pub mod servers;
 pub mod tokens;
 pub mod users;
+
+pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::migrate::MigrateError> {
+    sqlx::migrate!("./migrations").run(pool).await
+}
 
 
 

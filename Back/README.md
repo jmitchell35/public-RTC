@@ -67,7 +67,13 @@ Then set `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rtc` (see `
 ## Tests
 
 ```bash
-cargo test
+DATABASE_URL=postgres://... cargo test
+```
+
+Optional coverage (if `cargo-llvm-cov` is installed):
+
+```bash
+cargo llvm-cov --workspace --summary
 ```
 
 ## REST endpoints (main)

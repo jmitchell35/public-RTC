@@ -390,6 +390,21 @@ export default function ServerPage() {
         }
     };
 
+    const handleKickMember = async (userId: string) => {
+        if (!window.confirm("Expulser ce membre du serveur ?")) {
+            return;
+        }
+        const res = await fetch(`/api/servers/${serverId}/members/${userId}`, {
+            method: "DELETE",
+        });
+        if (res.ok) {
+            await refreshMembers();
+        } else {
+            const text = await res.text();
+            alert(`Expulsion échouée (${res.status}) ${text}`);
+        }
+    };
+
     return (
         <>
             <header className="home-header">
@@ -535,12 +550,24 @@ export default function ServerPage() {
                                         {member.username[0]?.toUpperCase() ?? "U"}
                                     </div>
                                     <div className="home-member-meta">
-                                        <span className="home-member-name">
-                                            {member.username}
-                                        </span>
-                                        <span className="home-member-role">
-                                            {member.role}
-                                            {member.online ? " • online" : " • offline"}
+                                        <div className="home-member-line">
+                                            <span className="home-member-name">
+                                                {member.username}
+                                            </span>
+                                            <span
+                                                className={`home-member-role home-member-role-${member.role}`}
+                                            >
+                                                {member.role}
+                                            </span>
+                                        </div>
+                                        <span
+                                            className={`home-member-status ${
+                                                member.online
+                                                    ? "home-member-status-online"
+                                                    : "home-member-status-offline"
+                                            }`}
+                                        >
+                                            {member.online ? "online" : "offline"}
                                         </span>
                                     </div>
                                 </div>
@@ -593,20 +620,30 @@ export default function ServerPage() {
                                         </div>
                                     </div>
                                     {isOwner && member.user_id !== me?.id ? (
-                                        <select
-                                            className="home-role-select"
-                                            value={member.role}
-                                            onChange={(event) =>
-                                                handleRoleUpdate(
-                                                    member.user_id,
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            <option value="member">member</option>
-                                            <option value="admin">admin</option>
-                                            <option value="owner">owner</option>
-                                        </select>
+                                        <div className="home-role-actions">
+                                            <select
+                                                className="home-role-select"
+                                                value={member.role}
+                                                onChange={(event) =>
+                                                    handleRoleUpdate(
+                                                        member.user_id,
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            >
+                                                <option value="member">member</option>
+                                                <option value="admin">admin</option>
+                                                <option value="owner">owner</option>
+                                            </select>
+                                            <button
+                                                className="home-role-kick"
+                                                onClick={() =>
+                                                    handleKickMember(member.user_id)
+                                                }
+                                            >
+                                                Expulser
+                                            </button>
+                                        </div>
                                     ) : (
                                         <span className="home-role-pill">
                                             {member.role}

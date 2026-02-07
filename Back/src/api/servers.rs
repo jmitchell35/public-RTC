@@ -68,7 +68,10 @@ pub fn routes() -> Router<AppState> {
         .route("/servers/{id}/join", post(join_server))
         .route("/servers/{id}/leave", delete(leave_server))
         .route("/servers/{id}/members", get(list_members))
-        .route("/servers/{id}/members/{user_id}", put(update_member_role))
+        .route(
+            "/servers/{id}/members/{user_id}",
+            put(update_member_role).delete(remove_member),
+        )
         .route("/servers/{id}/invites", post(create_invite))
         .route("/invites/{code}/join", post(join_by_invite))
 }
@@ -207,6 +210,27 @@ pub async fn update_member_role(
         return Ok(axum::http::StatusCode::NO_CONTENT);
     }
     db::members::update_role(&state.db, server_id, target_user_id, payload.role).await?;
+    Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+pub async fn remove_member(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path((server_id, target_user_id)): Path<(Uuid, Uuid)>,
+) -> Result<axum::http::StatusCode, ApiError> {
+    ensure_role(&state, server_id, user.user_id, Role::Owner).await?;
+    if target_user_id == user.user_id {
+        return Err(ApiError::BadRequest(
+            "owner cannot remove themselves".to_string(),
+        ));
+    }
+    let target_role = db::members::get_role(&state.db, server_id, target_user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    if target_role == Role::Owner {
+        return Err(ApiError::BadRequest("cannot remove owner".to_string()));
+    }
+    db::members::remove_member(&state.db, server_id, target_user_id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
