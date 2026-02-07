@@ -314,6 +314,15 @@ export default function ServerPage() {
             method: "DELETE",
         });
         if (res.ok) {
+            window.dispatchEvent(
+                new CustomEvent("servers-remove", { detail: { id: serverId } }),
+            );
+            window.dispatchEvent(new Event("servers-refresh"));
+            router.push("/home");
+        } else if (res.status === 502) {
+            window.dispatchEvent(
+                new CustomEvent("servers-remove", { detail: { id: serverId } }),
+            );
             window.dispatchEvent(new Event("servers-refresh"));
             router.push("/home");
         } else {
@@ -329,6 +338,15 @@ export default function ServerPage() {
         }
         const res = await fetch(`/api/servers/${serverId}`, { method: "DELETE" });
         if (res.ok) {
+            window.dispatchEvent(
+                new CustomEvent("servers-remove", { detail: { id: serverId } }),
+            );
+            window.dispatchEvent(new Event("servers-refresh"));
+            router.push("/home");
+        } else if (res.status === 502) {
+            window.dispatchEvent(
+                new CustomEvent("servers-remove", { detail: { id: serverId } }),
+            );
             window.dispatchEvent(new Event("servers-refresh"));
             router.push("/home");
         } else {

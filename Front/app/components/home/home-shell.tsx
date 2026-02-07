@@ -63,6 +63,22 @@ export default function HomeShell({ children }: { children: ReactNode }) {
     }, [fetchServers]);
 
     useEffect(() => {
+        const handler = (event: Event) => {
+            const custom = event as CustomEvent<{ id?: string }>;
+            if (!custom.detail?.id) {
+                return;
+            }
+            setServers((prev) =>
+                prev.filter((server) => server.id !== custom.detail?.id),
+            );
+        };
+        window.addEventListener('servers-remove', handler as EventListener);
+        return () => {
+            window.removeEventListener('servers-remove', handler as EventListener);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!ws || !isConnected) {
             return;
         }
