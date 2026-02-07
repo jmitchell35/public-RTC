@@ -9,7 +9,7 @@ use crate::{
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    routing::{delete, get, put},
+    routing::get,
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};

@@ -52,7 +52,7 @@ pub async fn remove_member(
 pub async fn list_members(
     pool: &PgPool,
     server_id: Uuid,
-) -> Result<Vec<(Uuid, String, Role)>, ApiError> {
+) -> Result<Vec<(Uuid, String, String, Role)>, ApiError> {
     let rows = sqlx::query_as::<_, (Uuid, String, String, String)>(
         r#"SELECT u.id, u.username, u.status, sm.role
         FROM server_members sm
