@@ -394,11 +394,20 @@ export function ChatClient({
                     const isEditing = editingId === message.id;
                     const isTemp = message.id.startsWith("temp-");
                     return (
-                        <div key={message.id} className="home-chat-message">
+                        <div
+                            key={message.id}
+                            className={`home-chat-message ${
+                                isMe ? "is-me" : "is-other"
+                            }`}
+                        >
                             <div className="home-chat-avatar">
                                 {author[0] ?? "?"}
                             </div>
-                            <div className="home-chat-bubble">
+                            <div
+                                className={`home-chat-bubble ${
+                                    isMe ? "mine" : ""
+                                }`}
+                            >
                                 <div className="home-chat-meta">
                                     <span className="home-chat-author">
                                         {author}
