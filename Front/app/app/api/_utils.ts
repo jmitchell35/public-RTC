@@ -18,6 +18,11 @@ export async function forwardBackend(path: string, init: RequestInit) {
             headers,
             cache: 'no-store',
         });
+        // 204/205/304 must not include a body
+        if ([204, 205, 304].includes(response.status)) {
+            return new NextResponse(null, { status: response.status });
+        }
+
         const body = await response.text();
         const proxyHeaders = new Headers();
         const contentType = response.headers.get('content-type');
