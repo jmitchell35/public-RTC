@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type AddFriendFormProps = {
     friendCode?: string;
@@ -11,6 +12,7 @@ export default function AddFriendForm({
     friendCode,
     onSendRequest,
 }: AddFriendFormProps) {
+    const { t } = useTranslation();
     const [value, setValue] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isPending, setIsPending] = useState(false);
@@ -22,7 +24,7 @@ export default function AddFriendForm({
         }
         const trimmed = value.trim();
         if (!trimmed) {
-            setErrorMessage('Enter a friend code.');
+            setErrorMessage(t('friends.enter_code_error'));
             return;
         }
         setIsPending(true);
@@ -40,7 +42,7 @@ export default function AddFriendForm({
                 <input
                     name="friendCode"
                     type="text"
-                    placeholder="Enter a friend code"
+                    placeholder={t('friends.enter_code_placeholder')}
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                     className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
@@ -51,12 +53,12 @@ export default function AddFriendForm({
                     disabled={isPending}
                     className="whitespace-nowrap rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Send Request
+                    {t('friends.send_request')}
                 </button>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                 <span>
-                    Your friend code:{' '}
+                    {t('friends.friend_code_label')}{' '}
                     <span className="font-semibold text-slate-700">
                         {friendCode ?? '...'}
                     </span>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { SecondaryButton } from "@/components/home/buttons";
 import { ChatClient } from "@/components/home/chat_client";
 import { useHomeWs } from "@/components/home/home-ws-provider";
@@ -26,6 +27,7 @@ async function fetchJson<T>(url: string) {
 }
 
 export default function ServerPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const ws = useHomeWs();
     const params = useParams<{ id: string }>();
@@ -50,6 +52,7 @@ export default function ServerPage() {
         outgoing: [],
     });
     const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
+    const [banningMemberId, setBanningMemberId] = useState<string | null>(null);
 
     const myRole = useMemo(() => {
         if (!me) {
@@ -87,7 +90,7 @@ export default function ServerPage() {
         let cancelled = false;
         async function load() {
             if (!serverId) {
-                setError("Paramètre serveur manquant");
+                setError(t("server.missing_server_param"));
                 setLoading(false);
                 return;
             }
@@ -145,7 +148,7 @@ export default function ServerPage() {
                 }
             } catch (err: any) {
                 if (!cancelled) {
-                    setError(err.message || "Erreur");
+                    setError(err.message || t("common.error"));
                 }
             } finally {
                 if (!cancelled) {
@@ -157,7 +160,7 @@ export default function ServerPage() {
         return () => {
             cancelled = true;
         };
-    }, [serverId]);
+    }, [serverId, t]);
 
     const isConnected = ws?.isConnected ?? false;
 
@@ -265,7 +268,7 @@ export default function ServerPage() {
                 }
             } catch (err: any) {
                 if (!cancelled) {
-                    setError(err.message || "Erreur");
+                    setError(err.message || t("common.error"));
                 }
             } finally {
                 if (!cancelled) {
@@ -277,7 +280,7 @@ export default function ServerPage() {
         return () => {
             cancelled = true;
         };
-    }, [activeChannelId]);
+    }, [activeChannelId, t]);
 
     const refreshChannels = async () => {
         const resp = await fetchJson<{ channels: Channel[] }>(
@@ -303,13 +306,13 @@ export default function ServerPage() {
     };
 
     if (loading) {
-        return <div style={{ padding: 24 }}>Chargement...</div>;
+        return <div style={{ padding: 24 }}>{t("common.loading")}</div>;
     }
     if (error) {
         return <div style={{ padding: 24, color: "red" }}>{error}</div>;
     }
     if (!server) {
-        return <div style={{ padding: 24 }}>Serveur introuvable</div>;
+        return <div style={{ padding: 24 }}>{t("server.server_not_found")}</div>;
     }
 
     const activeChannel = channels.find(
@@ -317,7 +320,7 @@ export default function ServerPage() {
     );
 
     const handleCreateChannel = async () => {
-        const name = prompt("Nom du salon");
+        const name = prompt(t("server.channel_name_prompt"));
         if (!name || !name.trim()) {
             return;
         }
@@ -330,12 +333,12 @@ export default function ServerPage() {
             await refreshChannels();
         } else {
             const text = await res.text();
-            alert(`Création échouée (${res.status}) ${text}`);
+            alert(t("server.channel_create_failed", { status: res.status, text }));
         }
     };
 
     const handleDeleteChannel = async (channelId: string) => {
-        if (!confirm("Supprimer ce salon ?")) {
+        if (!confirm(t("common.delete") + " ?")) {
             return;
         }
         setChannelMenuId(null);
@@ -344,12 +347,12 @@ export default function ServerPage() {
             await refreshChannels();
         } else {
             const text = await res.text();
-            alert(`Suppression échouée (${res.status}) ${text}`);
+            alert(t("server.channel_delete_failed", { status: res.status, text }));
         }
     };
 
     const handleRenameChannel = async (channelId: string) => {
-        const name = prompt("Nouveau nom du salon");
+        const name = prompt(t("server.channel_rename_prompt"));
         if (!name || !name.trim()) {
             return;
         }
@@ -363,12 +366,12 @@ export default function ServerPage() {
             await refreshChannels();
         } else {
             const text = await res.text();
-            alert(`Modification échouée (${res.status}) ${text}`);
+            alert(t("server.channel_rename_failed", { status: res.status, text }));
         }
     };
 
     const handleLeaveServer = async () => {
-        if (!confirm("Quitter ce serveur ?")) {
+        if (!confirm(t("server.leave_confirm"))) {
             return;
         }
         const res = await fetch(`/api/servers/${serverId}/leave`, {
@@ -388,13 +391,13 @@ export default function ServerPage() {
             router.push("/home");
         } else {
             const text = await res.text();
-            alert(`Quitter échoué (${res.status}) ${text}`);
+            alert(t("server.leave_failed", { status: res.status, text }));
             window.dispatchEvent(new Event("servers-refresh"));
         }
     };
 
     const handleDeleteServer = async () => {
-        if (!confirm("Supprimer ce serveur ?")) {
+        if (!confirm(t("server.delete_confirm"))) {
             return;
         }
         const res = await fetch(`/api/servers/${serverId}`, { method: "DELETE" });
@@ -412,7 +415,7 @@ export default function ServerPage() {
             router.push("/home");
         } else {
             const text = await res.text();
-            alert(`Suppression échouée (${res.status}) ${text}`);
+            alert(t("server.delete_server_failed", { status: res.status, text }));
             window.dispatchEvent(new Event("servers-refresh"));
         }
     };
@@ -427,13 +430,13 @@ export default function ServerPage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(data?.error || "Erreur invite");
+                throw new Error(data?.error || t("server.invite_create_failed"));
             }
             const code = data?.code;
             setInviteCode(code ?? null);
-            alert(`Code d'invitation : ${code}`);
+            alert(t("server.invite_code_display", { code }));
         } catch (err: any) {
-            alert(err.message || "Erreur lors de la création de l'invite");
+            alert(err.message || t("server.invite_create_failed"));
         }
     };
 
@@ -449,15 +452,15 @@ export default function ServerPage() {
                 return;
             }
             const text = await res.text();
-            alert(`Changement échoué (${res.status}) ${text}`);
+            alert(t("server.role_change_failed", { status: res.status, text }));
         } catch (error) {
             console.error("Role update failed", error);
-            alert("Changement échoué (backend indisponible)");
+            alert(t("common.backend_unreachable"));
         }
     };
 
     const handleKickMember = async (userId: string) => {
-        if (!window.confirm("Expulser ce membre du serveur ?")) {
+        if (!window.confirm(t("server.kick_confirm"))) {
             return;
         }
         try {
@@ -469,10 +472,34 @@ export default function ServerPage() {
                 return;
             }
             const text = await res.text();
-            alert(`Expulsion échouée (${res.status}) ${text}`);
+            alert(t("server.kick_failed", { status: res.status, text }));
         } catch (error) {
             console.error("Kick member failed", error);
-            alert("Expulsion échouée (backend indisponible)");
+            alert(t("common.backend_unreachable"));
+        }
+    };
+
+    const handleBanMember = async (userId: string, durationMinutes: number | null) => {
+        setBanningMemberId(null);
+        try {
+            const body: { duration_minutes?: number; reason?: string } = {};
+            if (durationMinutes !== null) {
+                body.duration_minutes = durationMinutes;
+            }
+            const res = await fetch(`/api/servers/${serverId}/members/${userId}/ban`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (res.ok || res.status === 502) {
+                await refreshMembers();
+                return;
+            }
+            const text = await res.text();
+            alert(t("server.ban_failed", { status: res.status, text }));
+        } catch (error) {
+            console.error("Ban member failed", error);
+            alert(t("common.backend_unreachable"));
         }
     };
 
@@ -489,7 +516,7 @@ export default function ServerPage() {
             });
             if (!res.ok) {
                 const text = await res.text();
-                alert(`Demande échouée (${res.status}) ${text}`);
+                alert(`${res.status} ${text}`);
                 return;
             }
             const data = await res.json().catch(() => null);
@@ -502,7 +529,7 @@ export default function ServerPage() {
             }
         } catch (error) {
             console.error("Add friend failed", error);
-            alert("Demande échouée (backend indisponible)");
+            alert(t("common.backend_unreachable"));
         } finally {
             setAddingFriendId(null);
         }
@@ -519,14 +546,14 @@ export default function ServerPage() {
                         <div className="home-server-name">{server.name}</div>
                         <div className="home-server-status">
                             <span className="home-status-dot" />
-                            <span>{members.filter((m) => m.online).length} en ligne</span>
+                            <span>{t("server.online_count", { count: members.filter((m) => m.online).length })}</span>
                         </div>
                     </div>
                 </div>
                 <div className="home-header-actions">
                     {isOwner ? (
                         <SecondaryButton
-                            label="Roles"
+                            label={t("server.roles_btn")}
                             onClick={() => setShowRoleModal(true)}
                         />
                     ) : null}
@@ -536,13 +563,13 @@ export default function ServerPage() {
                             style={{ padding: "10px 14px" }}
                             onClick={handleInvite}
                         >
-                            Invitation
+                            {t("server.invite_btn")}
                         </button>
                     ) : null}
                     {isOwner ? (
-                        <SecondaryButton label="Supprimer" onClick={handleDeleteServer} />
+                        <SecondaryButton label={t("server.delete_btn")} onClick={handleDeleteServer} />
                     ) : (
-                        <SecondaryButton label="Quitter" onClick={handleLeaveServer} />
+                        <SecondaryButton label={t("server.leave_btn")} onClick={handleLeaveServer} />
                     )}
                 </div>
             </header>
@@ -550,7 +577,7 @@ export default function ServerPage() {
             <div className="home-body">
                 <aside className="home-channels">
                     <div className="home-channels-title">
-                        Salons
+                        {t("server.channels")}
                         {canManageChannels ? (
                             <button
                                 className="home-channel-add"
@@ -601,23 +628,19 @@ export default function ServerPage() {
                                                     type="button"
                                                     onClick={(event) => {
                                                         event.stopPropagation();
-                                                        handleRenameChannel(
-                                                            channel.id,
-                                                        );
+                                                        handleRenameChannel(channel.id);
                                                     }}
                                                 >
-                                                    Renommer
+                                                    {t("common.rename")}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={(event) => {
                                                         event.stopPropagation();
-                                                        handleDeleteChannel(
-                                                            channel.id,
-                                                        );
+                                                        handleDeleteChannel(channel.id);
                                                     }}
                                                 >
-                                                    Supprimer
+                                                    {t("common.delete")}
                                                 </button>
                                             </div>
                                         ) : null}
@@ -641,7 +664,7 @@ export default function ServerPage() {
 
                     <aside className="home-members">
                         <div className="home-members-title">
-                            Membres
+                            {t("server.members")}
                             <span className="home-members-count">
                                 {members.length}
                             </span>
@@ -671,8 +694,8 @@ export default function ServerPage() {
                                             }`}
                                         >
                                             {member.online
-                                                ? member.status || "online"
-                                                : "offline"}
+                                                ? t(`status.${member.status || "online"}`, member.status || "online")
+                                                : t("status.offline")}
                                         </span>
                                     </div>
                                     {member.user_id !== me?.id &&
@@ -684,7 +707,7 @@ export default function ServerPage() {
                                             type="button"
                                             onClick={() => handleAddFriend(member)}
                                             disabled={addingFriendId === member.user_id}
-                                            title="Ajouter en ami"
+                                            title={t("server.add_friend_title")}
                                         >
                                             +
                                         </button>
@@ -707,9 +730,9 @@ export default function ServerPage() {
                     >
                         <div className="home-modal-header">
                             <div>
-                                <h3 className="home-modal-title">Roles du serveur</h3>
+                                <h3 className="home-modal-title">{t("server.roles_title")}</h3>
                                 <p className="home-modal-subtitle">
-                                    Définissez les permissions des membres.
+                                    {t("server.roles_subtitle")}
                                 </p>
                             </div>
                             <button
@@ -760,8 +783,44 @@ export default function ServerPage() {
                                                     handleKickMember(member.user_id)
                                                 }
                                             >
-                                                Expulser
+                                                {t("server.kick")}
                                             </button>
+                                            {banningMemberId === member.user_id ? (
+                                                <div className="home-ban-picker">
+                                                    <select
+                                                        className="home-role-select"
+                                                        defaultValue=""
+                                                        onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            if (v === "") return;
+                                                            handleBanMember(
+                                                                member.user_id,
+                                                                v === "permanent" ? null : parseInt(v),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <option value="" disabled>{t("server.ban_duration_label")}</option>
+                                                        <option value="permanent">{t("server.ban_permanent")}</option>
+                                                        <option value="60">{t("server.ban_1h")}</option>
+                                                        <option value="1440">{t("server.ban_24h")}</option>
+                                                        <option value="10080">{t("server.ban_7d")}</option>
+                                                        <option value="43200">{t("server.ban_30d")}</option>
+                                                    </select>
+                                                    <button
+                                                        className="home-role-kick"
+                                                        onClick={() => setBanningMemberId(null)}
+                                                    >
+                                                        {t("common.cancel")}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    className="home-role-kick"
+                                                    onClick={() => setBanningMemberId(member.user_id)}
+                                                >
+                                                    {t("server.ban")}
+                                                </button>
+                                            )}
                                         </div>
                                     ) : (
                                         <span className="home-role-pill">
@@ -776,7 +835,7 @@ export default function ServerPage() {
                                 className="home-btn home-btn-secondary"
                                 onClick={() => setShowRoleModal(false)}
                             >
-                                Fermer
+                                {t("common.close")}
                             </button>
                         </div>
                     </div>

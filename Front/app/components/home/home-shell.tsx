@@ -2,12 +2,14 @@
 
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSelectedLayoutSegment } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { ServerBar } from '@/components/home/server_bar';
 import { useHomeWs } from '@/components/home/home-ws-provider';
 
 type Server = { id: string; name: string; icon: string; notif?: number };
 
 export default function HomeShell({ children }: { children: ReactNode }) {
+    const { t } = useTranslation();
     const router = useRouter();
     const segment = useSelectedLayoutSegment();
     const activeId = segment && segment !== 'dm' ? segment : undefined;
@@ -133,7 +135,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
         } else {
             const text = await res.text();
             console.error('create server error', res.status, text);
-            alert(`Création échouée (${res.status}) ${text}`);
+            alert(t('shell.create_failed', { status: res.status, text }));
         }
     };
 
@@ -173,7 +175,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
         } else {
             const text = await res.text();
             console.error('join server error', res.status, text);
-            alert(`Rejoindre échoué (${res.status}) ${text}`);
+            alert(t('shell.join_failed', { status: res.status, text }));
         }
     };
 
@@ -181,8 +183,8 @@ export default function HomeShell({ children }: { children: ReactNode }) {
         if (!loading) {
             return children;
         }
-        return <div style={{ padding: 16 }}>Chargement...</div>;
-    }, [children, loading]);
+        return <div style={{ padding: 16 }}>{t('common.loading')}</div>;
+    }, [children, loading, t]);
 
     return (
         <div className="home-root">
@@ -225,19 +227,19 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                         onClick={(event) => event.stopPropagation()}
                     >
                         <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
-                            Serveur
+                            {t('shell.server_dialog_title')}
                         </h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div>
                                 <label style={{ fontSize: 12, color: '#475569' }}>
-                                    Nom du serveur
+                                    {t('shell.server_name_label')}
                                 </label>
                                 <input
                                     value={newServerName}
                                     onChange={(event) =>
                                         setNewServerName(event.target.value)
                                     }
-                                    placeholder="Ex: Mon serveur"
+                                    placeholder={t('shell.server_name_placeholder')}
                                     style={{
                                         width: '100%',
                                         marginTop: 4,
@@ -260,7 +262,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    Créer
+                                    {t('common.create')}
                                 </button>
                             </div>
                             <div
@@ -272,14 +274,14 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                             />
                             <div>
                                 <label style={{ fontSize: 12, color: '#475569' }}>
-                                    Code d'invitation
+                                    {t('shell.invite_code_label')}
                                 </label>
                                 <input
                                     value={inviteCode}
                                     onChange={(event) =>
                                         setInviteCode(event.target.value)
                                     }
-                                    placeholder="Code"
+                                    placeholder={t('shell.invite_code_placeholder')}
                                     style={{
                                         width: '100%',
                                         marginTop: 4,
@@ -302,7 +304,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    Rejoindre
+                                    {t('common.join')}
                                 </button>
                             </div>
                             <button
@@ -317,7 +319,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                                     cursor: 'pointer',
                                 }}
                             >
-                                Fermer
+                                {t('common.close')}
                             </button>
                         </div>
                     </div>

@@ -12,8 +12,10 @@ import { LoginButton } from '@/components/login/login-button';
 import { useActionState } from 'react';
 import { registerUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterForm() {
+    const { t } = useTranslation();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/home';
     const [errorMessage, formAction, isPending] = useActionState(
@@ -25,7 +27,7 @@ export default function RegisterForm() {
         <form action={formAction} className="space-y-3">
             <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
                 <h1 className={`${lusitana.className} mb-3 text-2xl`}>
-                    Create your account.
+                    {t('auth.register_title')}
                 </h1>
                 <div className="w-full">
                     <div>
@@ -33,7 +35,7 @@ export default function RegisterForm() {
                             className="mb-3 mt-5 block text-xs font-medium text-gray-900"
                             htmlFor="username"
                         >
-                            Username
+                            {t('auth.username')}
                         </label>
                         <div className="relative" suppressHydrationWarning>
                             <input
@@ -41,7 +43,7 @@ export default function RegisterForm() {
                                 id="username"
                                 type="text"
                                 name="username"
-                                placeholder="Enter your username"
+                                placeholder={t('auth.username_placeholder')}
                                 required
                                 minLength={3}
                                 maxLength={32}
@@ -55,7 +57,7 @@ export default function RegisterForm() {
                             className="mb-3 mt-5 block text-xs font-medium text-gray-900"
                             htmlFor="email"
                         >
-                            Email
+                            {t('auth.email')}
                         </label>
                         <div className="relative" suppressHydrationWarning>
                             <input
@@ -63,7 +65,7 @@ export default function RegisterForm() {
                                 id="email"
                                 type="email"
                                 name="email"
-                                placeholder="Enter your email address"
+                                placeholder={t('auth.email_placeholder')}
                                 required
                                 suppressHydrationWarning
                             />
@@ -75,7 +77,7 @@ export default function RegisterForm() {
                             className="mb-3 mt-5 block text-xs font-medium text-gray-900"
                             htmlFor="password"
                         >
-                            Password
+                            {t('auth.password')}
                         </label>
                         <div className="relative" suppressHydrationWarning>
                             <input
@@ -83,7 +85,7 @@ export default function RegisterForm() {
                                 id="password"
                                 type="password"
                                 name="password"
-                                placeholder="Create a password"
+                                placeholder={t('auth.password_create_placeholder')}
                                 required
                                 minLength={8}
                                 suppressHydrationWarning
@@ -94,7 +96,7 @@ export default function RegisterForm() {
                 </div>
                 <input type="hidden" name="redirectTo" value={callbackUrl} />
                 <LoginButton className="mt-4 w-full" aria-disabled={isPending}>
-                    Sign up <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
+                    {t('auth.register_btn')} <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
                 </LoginButton>
                 <div
                     className="flex h-8 items-end space-x-1"

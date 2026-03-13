@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import AddFriendForm from '@/components/home/add-friend-form';
 import FriendList from '@/components/home/friend-list';
 import PendingRequests from '@/components/home/pending-requests';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { lusitana } from '@/lib/fonts';
 import type {
     FriendRequestItem,
@@ -13,7 +15,6 @@ import type {
     UserPublic,
 } from '@/lib/types';
 import { useHomeWs } from '@/components/home/home-ws-provider';
-// import ServerBar from '@/components/server_bar';
 
 type HomeClientProps = {
     initialMe: UserPublic | null;
@@ -22,35 +23,19 @@ type HomeClientProps = {
     initialTab?: 'friends' | 'add';
 };
 
-const statusStyles: Record<
-    string,
-    { label: string; dot: string; pill: string }
-> = {
-    online: {
-        label: 'Online',
-        dot: 'bg-emerald-500',
-        pill: 'bg-emerald-100 text-emerald-700',
-    },
-    offline: {
-        label: 'Offline',
-        dot: 'bg-slate-400',
-        pill: 'bg-slate-100 text-slate-600',
-    },
-    dnd: {
-        label: 'Do Not Disturb',
-        dot: 'bg-red-500',
-        pill: 'bg-red-100 text-red-600',
-    },
+const STATUS_DOT: Record<string, string> = {
+    online: 'bg-emerald-500',
+    offline: 'bg-slate-400',
+    dnd: 'bg-red-500',
+};
+
+const STATUS_PILL: Record<string, string> = {
+    online: 'bg-emerald-100 text-emerald-700',
+    offline: 'bg-slate-100 text-slate-600',
+    dnd: 'bg-red-100 text-red-600',
 };
 
 const STATUS_OPTIONS = ['online', 'dnd', 'offline'] as const;
-
-function getStatus(status?: string) {
-    if (!status) {
-        return statusStyles.offline;
-    }
-    return statusStyles[status] ?? statusStyles.offline;
-}
 
 function sortByUsername(list: UserPublic[]) {
     return [...list].sort((a, b) => a.username.localeCompare(b.username));
@@ -96,6 +81,7 @@ export default function HomeClient({
     initialRequests,
     initialTab = 'friends',
 }: HomeClientProps) {
+    const { t } = useTranslation();
     const router = useRouter();
     const ws = useHomeWs();
     const [me, setMe] = useState<UserPublic | null>(initialMe);
@@ -211,17 +197,18 @@ export default function HomeClient({
             <main className="min-h-screen bg-[#eef2f7] text-slate-900">
                 <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 py-16 text-center">
                     <h1 className={`${lusitana.className} text-2xl`}>
-                        Session expired
+                        {t('friends.session_expired')}
                     </h1>
                     <p className="text-sm text-slate-500">
-                        Please sign in again to view your friends.
+                        {t('friends.session_expired_message')}
                     </p>
                 </div>
             </main>
         );
     }
 
-    const status = getStatus(me.status);
+    const statusDot = STATUS_DOT[me.status] ?? STATUS_DOT.offline;
+    const statusLabel = t(`status.${me.status ?? 'offline'}`, me.status ?? 'Offline');
 
     const sendFriendRequest = async (friendCode: string) => {
         try {
@@ -260,7 +247,7 @@ export default function HomeClient({
             return null;
         } catch (error) {
             console.error('Friend request failed', error);
-            return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+            return t('common.backend_unreachable');
         }
     };
 
@@ -325,7 +312,7 @@ export default function HomeClient({
                 setMe((prev) =>
                     prev ? { ...prev, status: previousStatus } : prev,
                 );
-                setStatusError('Status update failed.');
+                setStatusError(t('friends.status_update_failed'));
                 return;
             }
             const data = (await response.json()) as { user?: UserPublic };
@@ -337,7 +324,7 @@ export default function HomeClient({
             setMe((prev) =>
                 prev ? { ...prev, status: previousStatus } : prev,
             );
-            setStatusError('Backend unreachable.');
+            setStatusError(t('common.backend_unreachable'));
         }
     };
 
@@ -371,14 +358,14 @@ export default function HomeClient({
                 <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
                     <div className="space-y-1">
                         <h1 className={`${lusitana.className} text-2xl`}>
-                            Friends
+                            {t('friends.title')}
                         </h1>
                         <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
                             <span className="rounded-full bg-slate-100 px-3 py-1">
-                                Online {onlineCount > 0 ? `(${onlineCount})` : ''}
+                                {t('friends.online_tab', { count: onlineCount > 0 ? `(${onlineCount})` : '' })}
                             </span>
                             <span className="rounded-full bg-slate-100 px-3 py-1">
-                                Pending {pendingCount > 0 ? `(${pendingCount})` : ''}
+                                {t('friends.pending_tab', { count: pendingCount > 0 ? `(${pendingCount})` : '' })}
                             </span>
                         </div>
                     </div>
@@ -391,7 +378,7 @@ export default function HomeClient({
                             <div className="relative h-10 w-10">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900" />
                                 <span
-                                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${status.dot}`}
+                                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${statusDot}`}
                                 />
                             </div>
                             <div className="min-w-0">
@@ -399,32 +386,34 @@ export default function HomeClient({
                                     {me.username}
                                 </div>
                                 <div className="text-xs text-slate-500">
-                                    {status.label}
+                                    {statusLabel}
                                 </div>
                             </div>
                         </Link>
                         <div className="flex flex-wrap items-center gap-2">
                             {STATUS_OPTIONS.map((value) => {
-                                const option = getStatus(value);
+                                const pill = STATUS_PILL[value] ?? STATUS_PILL.offline;
+                                const label = t(`status.${value}`);
                                 return (
                                     <button
                                         key={value}
                                         onClick={() => updateStatus(value)}
                                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                             me.status === value
-                                                ? option.pill
+                                                ? pill
                                                 : 'bg-white text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
-                                        {option.label}
+                                        {label}
                                     </button>
                                 );
                             })}
+                            <LanguageSwitcher />
                             <button
                                 onClick={handleLogout}
                                 className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
                             >
-                                Logout
+                                {t('common.logout')}
                             </button>
                         </div>
                     </div>
@@ -440,11 +429,10 @@ export default function HomeClient({
                 {lastNotification && notificationFriend && (
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
                         <div>
-                            New message from{' '}
-                            <span className="font-semibold">
-                                {notificationFriend.username}
-                            </span>
-                            : {lastNotification.content}
+                            {t('friends.new_message_from', {
+                                name: notificationFriend.username,
+                                content: lastNotification.content,
+                            })}
                         </div>
                         <div className="flex items-center gap-2">
                             <Link
@@ -455,13 +443,13 @@ export default function HomeClient({
                                 }}
                                 className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-400"
                             >
-                                View
+                                {t('common.view')}
                             </Link>
                             <button
                                 onClick={() => setLastNotification(null)}
                                 className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                             >
-                                Dismiss
+                                {t('common.dismiss')}
                             </button>
                         </div>
                     </div>
@@ -475,7 +463,7 @@ export default function HomeClient({
                                 : 'bg-white text-slate-600 hover:bg-slate-100'
                         }`}
                     >
-                        Friends
+                        {t('friends.title')}
                     </button>
                     <button
                         onClick={() => setActiveTab('add')}
@@ -485,7 +473,7 @@ export default function HomeClient({
                                 : 'bg-blue-500/10 text-blue-700 hover:bg-blue-500/20'
                         }`}
                     >
-                        Add Friend
+                        {t('friends.add_friend')}
                     </button>
                 </div>
 
@@ -507,11 +495,10 @@ export default function HomeClient({
                         <section className="rounded-2xl bg-white p-6 shadow-sm">
                             <div className="flex flex-col gap-2">
                                 <h2 className={`${lusitana.className} text-lg`}>
-                                    Add Friend
+                                    {t('friends.add_friend')}
                                 </h2>
                                 <p className="text-sm text-slate-500">
-                                    Use a friend code to send a request. Share yours
-                                    to connect faster.
+                                    {t('friends.add_friend_description')}
                                 </p>
                             </div>
                             <div className="mt-4">

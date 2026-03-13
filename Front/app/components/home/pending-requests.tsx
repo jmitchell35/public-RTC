@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { lusitana } from '@/lib/fonts';
 import type { FriendRequestsResponse } from '@/lib/types';
 
@@ -15,6 +16,7 @@ export default function PendingRequests({
     onAccept,
     onReject,
 }: PendingRequestsProps) {
+    const { t } = useTranslation();
     const [pendingIds, setPendingIds] = useState<string[]>([]);
     const pendingCount = requests.incoming.length + requests.outgoing.length;
 
@@ -34,21 +36,21 @@ export default function PendingRequests({
         <section className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
                 <h2 className={`${lusitana.className} text-lg`}>
-                    Pending Requests
+                    {t('friends.pending_requests')}
                 </h2>
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {pendingCount} pending
+                    {t('friends.pending_count', { count: pendingCount })}
                 </span>
             </div>
             <div className="mt-4 space-y-6">
                 <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Incoming
+                        {t('friends.incoming')}
                     </h3>
                     <div className="mt-3 space-y-3">
                         {requests.incoming.length === 0 ? (
                             <p className="text-sm text-slate-500">
-                                No incoming requests.
+                                {t('friends.no_incoming')}
                             </p>
                         ) : (
                             requests.incoming.map((request) => (
@@ -75,7 +77,7 @@ export default function PendingRequests({
                                             disabled={pendingIds.includes(request.id)}
                                             className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                            Accept
+                                            {t('common.accept')}
                                         </button>
                                         <button
                                             onClick={() =>
@@ -84,7 +86,7 @@ export default function PendingRequests({
                                             disabled={pendingIds.includes(request.id)}
                                             className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                            Ignore
+                                            {t('common.ignore')}
                                         </button>
                                     </div>
                                 </div>
@@ -94,12 +96,12 @@ export default function PendingRequests({
                 </div>
                 <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Outgoing
+                        {t('friends.outgoing')}
                     </h3>
                     <div className="mt-3 space-y-3">
                         {requests.outgoing.length === 0 ? (
                             <p className="text-sm text-slate-500">
-                                No outgoing requests.
+                                {t('friends.no_outgoing')}
                             </p>
                         ) : (
                             requests.outgoing.map((request) => (
@@ -125,7 +127,7 @@ export default function PendingRequests({
                                         disabled={pendingIds.includes(request.id)}
                                         className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        Cancel
+                                        {t('common.cancel')}
                                     </button>
                                 </div>
                             ))
