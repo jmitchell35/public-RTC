@@ -8,9 +8,9 @@ function authHeaders(req: NextRequest) {
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const params = await Promise.resolve(context.params); // ensure unwrap for Next dynamic
+  const params = await context.params;
   const headers = authHeaders(req);
   if (!headers) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
@@ -30,9 +30,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const params = await Promise.resolve(context.params); // ensure unwrap for Next dynamic
+  const params = await context.params;
   const headers = authHeaders(req);
   if (!headers) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
