@@ -265,7 +265,7 @@ export function ChatClient({
                         setMessages((prev) =>
                             mergeMessages(
                                 prev.filter((item) => item.id !== tempId),
-                                [data.message],
+                                [data.message!],
                             ),
                         );
                     }
@@ -295,7 +295,7 @@ export function ChatClient({
                 setMessages((prev) =>
                     mergeMessages(
                         prev.filter((item) => item.id !== tempId),
-                        [data.message],
+                        [data.message!],
                     ),
                 );
             }
@@ -338,7 +338,7 @@ export function ChatClient({
             }
             const data = (await res.json()) as { message?: ChannelMessage };
             if (data?.message) {
-                setMessages((prev) => mergeMessages(prev, [data.message]));
+                setMessages((prev) => mergeMessages(prev, [data.message!]));
             }
             setEditingId(null);
             setEditingValue("");

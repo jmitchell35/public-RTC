@@ -268,7 +268,7 @@ export default function HomeClient({
             }
             const data = (await response.json()) as { friend?: UserPublic };
             if (data?.friend) {
-                setFriends((prev) => upsertFriend(prev, data.friend));
+                setFriends((prev) => upsertFriend(prev, data.friend!));
             }
             setRequests((prev) => ({
                 incoming: removeRequest(prev.incoming, requestId),
@@ -366,10 +366,10 @@ export default function HomeClient({
                         </h1>
                         <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
                             <span className="rounded-full bg-slate-100 px-3 py-1">
-                                {t('friends.online_tab', { count: onlineCount > 0 ? `(${onlineCount})` : '' })}
+                                {t('friends.online_tab', { count: onlineCount })}
                             </span>
                             <span className="rounded-full bg-slate-100 px-3 py-1">
-                                {t('friends.pending_tab', { count: pendingCount > 0 ? `(${pendingCount})` : '' })}
+                                {t('friends.pending_tab', { count: pendingCount })}
                             </span>
                         </div>
                     </div>
