@@ -1,2 +1,29 @@
 [tools]
 rust = "latest"
+
+[env]
+_.file = ".env"
+
+[tasks.dev]
+description = "Run backend in dev mode"
+run = "cargo run"
+
+[tasks.check]
+description = "Type-check without building"
+run = "cargo check"
+
+[tasks.build]
+description = "Build release binary"
+run = "cargo build --release"
+
+[tasks.test]
+description = "Run tests"
+run = "cargo test"
+
+[tasks.db]
+description = "Start Postgres via Docker Compose"
+run = "docker compose up -d db"
+
+[tasks.db-stop]
+description = "Stop Postgres"
+run = "docker compose down"
