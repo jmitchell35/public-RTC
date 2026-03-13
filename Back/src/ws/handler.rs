@@ -524,7 +524,13 @@ mod tests {
             },
         );
 
-        let event = recv_event(&mut out_rx).await;
+        let event = loop {
+            let e = recv_event(&mut out_rx).await;
+            match e {
+                WsEvent::UserConnected { .. } | WsEvent::UserDisconnected { .. } => continue,
+                other => break other,
+            }
+        };
         match event {
             WsEvent::Notification { content, .. } => assert_eq!(content, "test"),
             other => panic!("expected Notification, got {other:?}"),
