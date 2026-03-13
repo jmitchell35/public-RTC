@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PrimaryButton } from "./buttons";
+import { GifPicker } from "./gif-picker";
 import { useHomeWs } from "@/components/home/home-ws-provider";
 import type { ChannelMessage, ServerMember } from "@/lib/types";
 
@@ -50,6 +51,7 @@ export function ChatClient({
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState("");
     const [actionError, setActionError] = useState<string | null>(null);
+    const [showGifPicker, setShowGifPicker] = useState(false);
     const pendingRef = useRef<Array<{ id: string; content: string }>>([]);
     const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const endRef = useRef<HTMLDivElement | null>(null);
@@ -400,6 +402,7 @@ export function ChatClient({
                     const isMe = message.author_id === currentUserId;
                     const isEditing = editingId === message.id;
                     const isTemp = message.id.startsWith("temp-");
+                    const isGif = /^https?:\/\/.+\.(gif|webp)(\?.*)?$/i.test(message.content);
                     return (
                         <div
                             key={message.id}
@@ -467,6 +470,14 @@ export function ChatClient({
                                             </button>
                                         </div>
                                     </div>
+                                ) : isGif ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={message.content}
+                                        alt="GIF"
+                                        style={{ maxWidth: 240, borderRadius: 8, display: 'block' }}
+                                        loading="lazy"
+                                    />
                                 ) : (
                                     <div className="home-chat-text">
                                         {message.content}
@@ -503,7 +514,34 @@ export function ChatClient({
                         <span className="home-chat-error">{actionError}</span>
                     ) : null}
                 </div>
-                <div className="home-chat-compose">
+                <div className="home-chat-compose" style={{ position: 'relative' }}>
+                    {showGifPicker && (
+                        <GifPicker
+                            onSelect={(url) => {
+                                setText(url);
+                                setShowGifPicker(false);
+                            }}
+                            onClose={() => setShowGifPicker(false)}
+                        />
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setShowGifPicker((v) => !v)}
+                        style={{
+                            padding: '6px 10px',
+                            borderRadius: 8,
+                            border: '1px solid #e2e8f0',
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#64748b',
+                            whiteSpace: 'nowrap',
+                        }}
+                        title="Send a GIF"
+                    >
+                        GIF
+                    </button>
                     <input
                         type="text"
                         placeholder={t("chat.send_placeholder")}
