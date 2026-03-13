@@ -1,5 +1,6 @@
 use sqlx::PgPool;
 
+pub mod bans;
 pub mod channels;
 pub mod direct_messages;
 pub mod friends;

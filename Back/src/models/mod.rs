@@ -106,6 +106,16 @@ pub struct MessageReaction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ServerBan {
+    pub server_id: ServerId,
+    pub user_id: UserId,
+    pub banned_by: UserId,
+    pub reason: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ServerMember {
     pub server_id: ServerId,
     pub user_id: UserId,

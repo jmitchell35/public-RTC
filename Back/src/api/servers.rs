@@ -32,6 +32,12 @@ pub struct UpdateMemberRoleRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct BanMemberRequest {
+    pub duration_minutes: Option<i64>,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct CreateInviteRequest {
     pub expires_in_hours: Option<i64>,
     pub max_uses: Option<i32>,
@@ -72,6 +78,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/servers/{id}/members/{user_id}",
             put(update_member_role).delete(remove_member),
+        )
+        .route(
+            "/servers/{id}/members/{user_id}/ban",
+            post(ban_member).delete(unban_member),
         )
         .route("/servers/{id}/invites", post(create_invite))
         .route("/invites/{code}/join", post(join_by_invite))
@@ -146,6 +156,9 @@ pub async fn join_server(
     if invite.server_id != server_id {
         return Err(ApiError::BadRequest("invite does not match server".to_string()));
     }
+    if db::bans::get_active_ban(&state.db, server_id, user.user_id).await?.is_some() {
+        return Err(ApiError::Forbidden);
+    }
     if db::members::get_role(&state.db, server_id, user.user_id).await?.is_some() {
         return Err(ApiError::Conflict("already a member".to_string()));
     }
@@ -162,6 +175,9 @@ pub async fn join_by_invite(
     Path(code): Path<String>,
 ) -> Result<axum::http::StatusCode, ApiError> {
     let invite = db::invites::use_invite(&state.db, &code).await?;
+    if db::bans::get_active_ban(&state.db, invite.server_id, user.user_id).await?.is_some() {
+        return Err(ApiError::Forbidden);
+    }
     if db::members::get_role(&state.db, invite.server_id, user.user_id).await?.is_some() {
         return Err(ApiError::Conflict("already a member".to_string()));
     }
@@ -172,6 +188,61 @@ pub async fn join_by_invite(
             server_id: invite.server_id,
         },
     );
+    Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+pub async fn ban_member(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path((server_id, target_user_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<BanMemberRequest>,
+) -> Result<axum::http::StatusCode, ApiError> {
+    ensure_role(&state, server_id, user.user_id, Role::Owner).await?;
+    if target_user_id == user.user_id {
+        return Err(ApiError::BadRequest("cannot ban yourself".to_string()));
+    }
+    let target_role = db::members::get_role(&state.db, server_id, target_user_id)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    if target_role == Role::Owner {
+        return Err(ApiError::BadRequest("cannot ban the owner".to_string()));
+    }
+    let expires_at = payload
+        .duration_minutes
+        .map(|m| Utc::now() + Duration::minutes(m));
+    // Remove from server first
+    db::members::remove_member(&state.db, server_id, target_user_id).await?;
+    // Insert ban record
+    db::bans::ban_user(
+        &state.db,
+        server_id,
+        target_user_id,
+        user.user_id,
+        payload.reason.as_deref(),
+        expires_at,
+    )
+    .await?;
+    state.presence.set_online(server_id, target_user_id, false);
+    state.ws_hub.broadcast_server(
+        server_id,
+        WsEvent::UserDisconnected {
+            server_id,
+            user_id: target_user_id,
+        },
+    );
+    state
+        .ws_hub
+        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
+    Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+pub async fn unban_member(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path((server_id, target_user_id)): Path<(Uuid, Uuid)>,
+) -> Result<axum::http::StatusCode, ApiError> {
+    ensure_role(&state, server_id, user.user_id, Role::Owner).await?;
+    db::bans::unban_user(&state.db, server_id, target_user_id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 

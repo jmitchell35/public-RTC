@@ -15,6 +15,7 @@ import type {
     UserPublic,
 } from '@/lib/types';
 import { useHomeWs } from '@/components/home/home-ws-provider';
+import { sendNotification } from '@/lib/notify';
 
 type HomeClientProps = {
     initialMe: UserPublic | null;
@@ -184,6 +185,9 @@ export default function HomeClient({
                         friendId: friend_id,
                         content: message.content,
                     });
+                    // System notification (Tauri or browser)
+                    const senderName = friends.find((f) => f.id === friend_id)?.username ?? 'Someone';
+                    sendNotification('RTC', `${senderName}: ${message.content}`).catch(() => {});
                     break;
                 }
                 default:

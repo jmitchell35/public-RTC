@@ -16,3 +16,11 @@ run = "cd app && npm run build"
 [tasks.lint]
 description = "Lint the code"
 run = "cd app && npm run lint"
+
+[tasks.desktop]
+description = "Run the desktop app (Tauri dev mode)"
+run = "cd app && npm run tauri:dev"
+
+[tasks.desktop-build]
+description = "Build the desktop app for release"
+run = "cd app && npm run tauri:build"
