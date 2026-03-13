@@ -3,6 +3,9 @@ import ProfileForm from '@/components/profile/profile-form';
 import { fetchProfile } from '@/lib/actions';
 
 import { Metadata } from 'next';
+import { Suspense } from 'react';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
     title: 'Profile',
@@ -17,7 +20,9 @@ export default async function ProfilePage() {
                 <div className="flex h-20 w-full items-end rounded-lg bg-blue-500 p-3 md:h-36">
                     <LogoComponent />
                 </div>
-                <ProfileForm user={user} />
+                <Suspense>
+                    <ProfileForm user={user} />
+                </Suspense>
             </div>
         </main>
     );
