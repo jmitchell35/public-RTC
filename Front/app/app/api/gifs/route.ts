@@ -1,36 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const TENOR_API_KEY = process.env.TENOR_API_KEY ?? '';
-const TENOR_BASE = 'https://tenor.googleapis.com/v2';
+const KLIPY_API_KEY = process.env.KLIPY_API_KEY ?? '';
+const KLIPY_BASE = 'https://api.klipy.com/api/v1';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
     const limit = searchParams.get('limit') ?? '16';
 
-    if (!TENOR_API_KEY) {
-        return NextResponse.json({ error: 'TENOR_API_KEY not configured' }, { status: 503 });
+    if (!KLIPY_API_KEY) {
+        return NextResponse.json({ error: 'KLIPY_API_KEY not configured' }, { status: 503 });
     }
 
     const endpoint = q
-        ? `${TENOR_BASE}/search?q=${encodeURIComponent(q)}&key=${TENOR_API_KEY}&limit=${limit}&media_filter=gif`
-        : `${TENOR_BASE}/featured?key=${TENOR_API_KEY}&limit=${limit}&media_filter=gif`;
+        ? `${KLIPY_BASE}/${KLIPY_API_KEY}/gifs/search?q=${encodeURIComponent(q)}&limit=${limit}`
+        : `${KLIPY_BASE}/${KLIPY_API_KEY}/gifs/trending?limit=${limit}`;
 
     try {
         const res = await fetch(endpoint, { next: { revalidate: 60 } });
         if (!res.ok) {
-            return NextResponse.json({ error: 'Tenor API error' }, { status: res.status });
+            return NextResponse.json({ error: 'Klipy API error' }, { status: res.status });
         }
         const data = await res.json();
-        const results = (data.results ?? []).map((item: any) => ({
+        const items: any[] = data.data?.data ?? [];
+        const results = items.map((item) => ({
             id: item.id,
-            title: item.title,
-            url: item.media_formats?.gif?.url ?? item.url,
-            preview: item.media_formats?.tinygif?.url ?? item.media_formats?.gif?.url,
+            title: item.title ?? '',
+            url: item.files?.original?.url ?? item.files?.gif?.url ?? '',
+            preview: item.files?.preview?.url ?? item.files?.fixed_width?.url ?? item.files?.original?.url ?? '',
         }));
         return NextResponse.json({ results });
     } catch (error) {
-        console.error('Tenor fetch failed', error);
+        console.error('Klipy fetch failed', error);
         return NextResponse.json({ error: 'Failed to fetch GIFs' }, { status: 500 });
     }
 }
