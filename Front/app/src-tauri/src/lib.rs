@@ -1,6 +1,9 @@
 use tauri::Manager;
+use std::sync::Mutex;
 
 const NEXT_PORT: u16 = 3000;
+
+struct NextServer(Mutex<Option<std::process::Child>>);
 
 #[tauri::command]
 fn show_notification(app: tauri::AppHandle, title: String, body: String) {
@@ -12,16 +15,15 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
+        .manage(NextServer(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![show_notification])
         .setup(|app| {
             #[cfg(not(debug_assertions))]
             {
                 let window = app.get_webview_window("main").unwrap();
                 if let Ok(url) = std::env::var("TAURI_FRONTEND_URL") {
-                    // Hosted mode: open the deployed frontend directly
                     window.navigate(url.parse()?)?;
                 } else {
-                    // Sidecar mode: start bundled Next.js standalone server
                     launch_sidecar(app)?;
                 }
             }
@@ -42,14 +44,25 @@ fn launch_sidecar(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
         .join("standalone")
         .join("server.js");
 
-    // Spawn the Next.js standalone server
-    std::process::Command::new("node")
+    let child = std::process::Command::new("node")
         .arg(&server_js)
         .env("PORT", NEXT_PORT.to_string())
         .env("HOSTNAME", "127.0.0.1")
         .spawn()?;
 
-    // Wait for the server to be ready in a background thread, then show the window
+    *app.state::<NextServer>().0.lock().unwrap() = Some(child);
+
+    // Kill the server when the window is closed
+    let app_handle = app.handle().clone();
+    window.on_window_event(move |event| {
+        if let tauri::WindowEvent::Destroyed = event {
+            if let Some(mut child) = app_handle.state::<NextServer>().0.lock().unwrap().take() {
+                child.kill().ok();
+            }
+        }
+    });
+
+    // Wait for the server in a background thread, then show the window
     let app_handle = app.handle().clone();
     std::thread::spawn(move || {
         for _ in 0..60 {
