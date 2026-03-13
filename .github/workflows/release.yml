@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workdir: Back
+      - name: Build release binary
+        working-directory: Back
+        run: cargo build --release
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtc-backend
+          path: Back/target/release/rtc_backend
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Front/app/package-lock.json
+      - name: Install dependencies
+        working-directory: Front/app
+        run: npm ci
+      - name: Build
+        working-directory: Front/app
+        run: npm run build
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rtc-backend
+          path: artifacts/
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/rtc-backend
+          generate_release_notes: true
