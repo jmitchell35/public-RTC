@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
         const results = items.map((item) => ({
             id: item.id,
             title: item.title ?? '',
-            url: item.files?.original?.url ?? item.files?.gif?.url ?? '',
-            preview: item.files?.preview?.url ?? item.files?.fixed_width?.url ?? item.files?.original?.url ?? '',
+            url: item.files?.original?.url || item.files?.gif?.url || '',
+            preview: item.files?.preview?.url || item.files?.fixed_width?.url || item.files?.original?.url || '',
         }));
         return NextResponse.json({ results });
     } catch (error) {

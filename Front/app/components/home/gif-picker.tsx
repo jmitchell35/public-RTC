@@ -141,13 +141,19 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                         }}
                         title={gif.title}
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={gif.preview}
-                            alt={gif.title}
-                            style={{ width: '100%', height: 90, objectFit: 'cover', display: 'block' }}
-                            loading="lazy"
-                        />
+                        {gif.preview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={gif.preview}
+                                alt={gif.title}
+                                style={{ width: '100%', height: 90, objectFit: 'cover', display: 'block' }}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div style={{ width: '100%', height: 90, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#94a3b8' }}>
+                                {gif.title}
+                            </div>
+                        )}
                     </button>
                 ))}
             </div>
