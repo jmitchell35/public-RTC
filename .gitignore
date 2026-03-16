@@ -6,3 +6,5 @@
 Front/.next/
 Front/node_modules/
 Back/target/
+
+.claude/

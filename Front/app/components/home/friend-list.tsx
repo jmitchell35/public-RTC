@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { lusitana } from '@/lib/fonts';
 import type { UserPublic } from '@/lib/types';
 
@@ -11,17 +12,14 @@ type FriendListProps = {
     onOpenFriend?: (friendId: string) => void;
 };
 
-const statusStyles: Record<string, { label: string; dot: string }> = {
-    online: { label: 'Online', dot: 'bg-emerald-500' },
-    offline: { label: 'Offline', dot: 'bg-slate-400' },
-    dnd: { label: 'Do Not Disturb', dot: 'bg-red-500' },
+const STATUS_DOT: Record<string, string> = {
+    online: 'bg-emerald-500',
+    offline: 'bg-slate-400',
+    dnd: 'bg-red-500',
 };
 
-function getStatus(status?: string) {
-    if (!status) {
-        return statusStyles.offline;
-    }
-    return statusStyles[status] ?? statusStyles.offline;
+function getStatusDot(status?: string) {
+    return STATUS_DOT[status ?? 'offline'] ?? STATUS_DOT.offline;
 }
 
 export default function FriendList({
@@ -29,6 +27,7 @@ export default function FriendList({
     unreadCounts,
     onOpenFriend,
 }: FriendListProps) {
+    const { t } = useTranslation();
     const prefetched = useRef(new Set<string>());
 
     const prefetchConversation = (friendId: string) => {
@@ -45,20 +44,21 @@ export default function FriendList({
         <section className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
                 <h2 className={`${lusitana.className} text-lg`}>
-                    All Friends
+                    {t('friends.all_friends')}
                 </h2>
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {friends.length} total
+                    {t('friends.total_count', { count: friends.length })}
                 </span>
             </div>
             <div className="mt-4 space-y-3">
                 {friends.length === 0 ? (
                     <p className="text-sm text-slate-500">
-                        No friends yet. Add a friend to start chatting.
+                        {t('friends.no_friends')}
                     </p>
                 ) : (
                     friends.map((friend) => {
-                        const status = getStatus(friend.status);
+                        const dot = getStatusDot(friend.status);
+                        const statusLabel = t(`status.${friend.status ?? 'offline'}`, friend.status ?? 'Offline');
                         const unread = unreadCounts?.[friend.id] ?? 0;
                         return (
                             <Link
@@ -78,7 +78,7 @@ export default function FriendList({
                                     <div className="relative h-10 w-10">
                                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900" />
                                         <span
-                                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${status.dot}`}
+                                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${dot}`}
                                         />
                                     </div>
                                     <div>
@@ -86,7 +86,7 @@ export default function FriendList({
                                             {friend.username}
                                         </div>
                                         <div className="text-xs text-slate-500">
-                                            {status.label}
+                                            {statusLabel}
                                         </div>
                                     </div>
                                 </div>
@@ -97,7 +97,7 @@ export default function FriendList({
                                         </span>
                                     )}
                                     <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-                                        Message
+                                        {t('friends.message_btn')}
                                     </span>
                                 </div>
                             </Link>

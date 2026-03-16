@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PrimaryButton } from "./buttons";
+import { GifPicker } from "./gif-picker";
 import { useHomeWs } from "@/components/home/home-ws-provider";
 import type { ChannelMessage, ServerMember } from "@/lib/types";
 
@@ -37,6 +39,7 @@ export function ChatClient({
     currentUserId,
     isLoading = false,
 }: Props) {
+    const { t } = useTranslation();
     const ws = useHomeWs();
     const [messages, setMessages] = useState<ChannelMessage[]>(() =>
         mergeMessages([], initialMessages),
@@ -48,6 +51,7 @@ export function ChatClient({
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState("");
     const [actionError, setActionError] = useState<string | null>(null);
+    const [showGifPicker, setShowGifPicker] = useState(false);
     const pendingRef = useRef<Array<{ id: string; content: string }>>([]);
     const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const endRef = useRef<HTMLDivElement | null>(null);
@@ -63,6 +67,7 @@ export function ChatClient({
     }, [messages.length]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessages((prev) => {
             const pending = prev.filter((message) =>
                 message.id.startsWith("temp-"),
@@ -169,11 +174,10 @@ export function ChatClient({
     }, [ws, channelId, currentUserId, editingId]);
 
     const typingNames = useMemo(() => {
-        const names = Array.from(typingUsers)
-            .map((id) => memberMap.get(id) ?? "Someone")
+        return Array.from(typingUsers)
+            .map((id) => memberMap.get(id) ?? t("common.unknown", "Someone"))
             .filter(Boolean);
-        return names;
-    }, [typingUsers, memberMap]);
+    }, [typingUsers, memberMap, t]);
 
     const notifyTyping = useCallback(
         (typing: boolean) => {
@@ -249,7 +253,7 @@ export function ChatClient({
                         },
                     );
                     if (!res.ok) {
-                        setActionError("Failed to send message.");
+                        setActionError(t("chat.send_failed"));
                         return;
                     }
                     const data = (await res.json()) as {
@@ -262,13 +266,13 @@ export function ChatClient({
                         setMessages((prev) =>
                             mergeMessages(
                                 prev.filter((item) => item.id !== tempId),
-                                [data.message],
+                                [data.message!],
                             ),
                         );
                     }
                 } catch (error) {
                     console.error("Fallback send failed", error);
-                    setActionError("Backend unreachable.");
+                    setActionError(t("common.backend_unreachable"));
                 }
             }, 2000);
             return;
@@ -281,7 +285,7 @@ export function ChatClient({
                 body: JSON.stringify({ content }),
             });
             if (!res.ok) {
-                setActionError("Failed to send message.");
+                setActionError(t("chat.send_failed"));
                 return;
             }
             const data = (await res.json()) as { message?: ChannelMessage };
@@ -292,13 +296,13 @@ export function ChatClient({
                 setMessages((prev) =>
                     mergeMessages(
                         prev.filter((item) => item.id !== tempId),
-                        [data.message],
+                        [data.message!],
                     ),
                 );
             }
         } catch (error) {
             console.error("Send message failed", error);
-            setActionError("Backend unreachable.");
+            setActionError(t("common.backend_unreachable"));
         }
     }
 
@@ -319,7 +323,7 @@ export function ChatClient({
         }
         const content = editingValue.trim();
         if (!content) {
-            setActionError("Message cannot be empty.");
+            setActionError(t("chat.empty_message"));
             return;
         }
         setActionError(null);
@@ -330,23 +334,23 @@ export function ChatClient({
                 body: JSON.stringify({ content }),
             });
             if (!res.ok) {
-                setActionError("Failed to update message.");
+                setActionError(t("chat.update_failed"));
                 return;
             }
             const data = (await res.json()) as { message?: ChannelMessage };
             if (data?.message) {
-                setMessages((prev) => mergeMessages(prev, [data.message]));
+                setMessages((prev) => mergeMessages(prev, [data.message!]));
             }
             setEditingId(null);
             setEditingValue("");
         } catch (error) {
             console.error("Edit message failed", error);
-            setActionError("Backend unreachable.");
+            setActionError(t("common.backend_unreachable"));
         }
     };
 
     const removeMessage = async (message: ChannelMessage) => {
-        if (!window.confirm("Delete this message?")) {
+        if (!window.confirm(t("chat.delete_confirm"))) {
             return;
         }
         setActionError(null);
@@ -355,7 +359,7 @@ export function ChatClient({
                 method: "DELETE",
             });
             if (!res.ok) {
-                setActionError("Failed to delete message.");
+                setActionError(t("chat.delete_failed"));
                 return;
             }
             setMessages((prev) =>
@@ -363,9 +367,15 @@ export function ChatClient({
             );
         } catch (error) {
             console.error("Delete message failed", error);
-            setActionError("Backend unreachable.");
+            setActionError(t("common.backend_unreachable"));
         }
     };
+
+    const typingLabel = typingNames.length === 1
+        ? t("chat.typing_one", { name: typingNames[0] })
+        : typingNames.length > 1
+        ? t("chat.typing_multiple", { names: typingNames.join(", ") })
+        : "";
 
     return (
         <div className="home-chat">
@@ -376,7 +386,7 @@ export function ChatClient({
                 {isLoading ? (
                     <div className="home-chat-loading">
                         <div className="home-chat-spinner" />
-                        <span>Chargement des messages...</span>
+                        <span>{t("chat.loading_messages")}</span>
                     </div>
                 ) : null}
                 {isLoading && messages.length === 0 ? (
@@ -393,6 +403,7 @@ export function ChatClient({
                     const isMe = message.author_id === currentUserId;
                     const isEditing = editingId === message.id;
                     const isTemp = message.id.startsWith("temp-");
+                    const isGif = /^https?:\/\/.+\.(gif|webp)(\?.*)?$/i.test(message.content);
                     return (
                         <div
                             key={message.id}
@@ -419,7 +430,7 @@ export function ChatClient({
                                     </span>
                                     {message.edited_at ? (
                                         <span className="home-chat-edited">
-                                            edited
+                                            {t("chat.edited")}
                                         </span>
                                     ) : null}
                                 </div>
@@ -449,17 +460,25 @@ export function ChatClient({
                                                 type="button"
                                                 onClick={cancelEdit}
                                             >
-                                                Cancel
+                                                {t("common.cancel")}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={saveEdit}
                                                 disabled={!editingValue.trim()}
                                             >
-                                                Save
+                                                {t("common.save")}
                                             </button>
                                         </div>
                                     </div>
+                                ) : isGif ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={message.content}
+                                        alt="GIF"
+                                        style={{ maxWidth: 240, borderRadius: 8, display: 'block' }}
+                                        loading="lazy"
+                                    />
                                 ) : (
                                     <div className="home-chat-text">
                                         {message.content}
@@ -471,7 +490,7 @@ export function ChatClient({
                                             type="button"
                                             onClick={() => startEdit(message)}
                                         >
-                                            Edit
+                                            {t("common.edit")}
                                         </button>
                                         <button
                                             type="button"
@@ -479,7 +498,7 @@ export function ChatClient({
                                                 removeMessage(message)
                                             }
                                         >
-                                            Delete
+                                            {t("common.delete")}
                                         </button>
                                     </div>
                                 ) : null}
@@ -489,19 +508,44 @@ export function ChatClient({
                 })}
                 <div ref={endRef} />
             </div>
-            <div className="home-chat-input">
+            <div className="home-chat-input" style={{ position: 'relative' }}>
                 <div className="home-chat-typing">
-                    {typingNames.length > 0
-                        ? `${typingNames.join(", ")} is typing...`
-                        : ""}
+                    {typingLabel}
                     {actionError ? (
                         <span className="home-chat-error">{actionError}</span>
                     ) : null}
                 </div>
                 <div className="home-chat-compose">
+                    {showGifPicker && (
+                        <GifPicker
+                            onSelect={(url) => {
+                                setText(url);
+                                setShowGifPicker(false);
+                            }}
+                            onClose={() => setShowGifPicker(false)}
+                        />
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setShowGifPicker((v) => !v)}
+                        style={{
+                            padding: '6px 10px',
+                            borderRadius: 8,
+                            border: '1px solid #e2e8f0',
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#64748b',
+                            whiteSpace: 'nowrap',
+                        }}
+                        title="Send a GIF"
+                    >
+                        GIF
+                    </button>
                     <input
                         type="text"
-                        placeholder="Envoyer un message"
+                        placeholder={t("chat.send_placeholder")}
                         className="home-input"
                         value={text}
                         onChange={(event) => handleTyping(event.target.value)}
@@ -512,7 +556,7 @@ export function ChatClient({
                         }}
                         onBlur={() => notifyTyping(false)}
                     />
-                    <PrimaryButton label="Envoyer" onClick={sendMessage} />
+                    <PrimaryButton label={t("chat.send")} onClick={sendMessage} />
                 </div>
             </div>
         </div>

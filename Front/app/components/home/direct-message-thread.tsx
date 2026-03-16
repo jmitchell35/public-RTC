@@ -160,7 +160,7 @@ export default function DirectMessageThread({
                 setMessages((prev) =>
                     mergeMessages(
                         prev.filter((message) => message.id !== tempId),
-                        data.messages,
+                        data.messages!,
                     ),
                 );
             } else {

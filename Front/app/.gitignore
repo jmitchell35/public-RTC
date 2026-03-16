@@ -41,3 +41,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tauri
+src-tauri/target/
+src-tauri/gen/
+
+# misc artifacts
+PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1

@@ -10,7 +10,7 @@ pub async fn revoke(pool: &PgPool, jti: &str) -> Result<(), ApiError> {
 }
 
 pub async fn is_revoked(pool: &PgPool, jti: &str) -> Result<bool, ApiError> {
-    let exists: Option<i64> = sqlx::query_scalar(
+    let exists: Option<i32> = sqlx::query_scalar(
         "SELECT 1 FROM revoked_tokens WHERE jti = $1",
     )
     .bind(jti)

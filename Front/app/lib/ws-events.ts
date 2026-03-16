@@ -89,10 +89,6 @@ export type WsEvent =
     | {
           type: 'DirectTyping';
           data: { friend_id: string; is_typing: boolean };
-      }
-    | {
-          type: string;
-          data?: unknown;
       };
 
 export function parseWsEvent(payload: string): WsEvent | null {

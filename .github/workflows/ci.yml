@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (Rust)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: rtc
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rtc
+      JWT_SECRET: ci-secret
+      JWT_EXP_SECONDS: 604800
+      BIND_ADDR: 0.0.0.0:3001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workdir: Back
+      - name: Check
+        working-directory: Back
+        run: cargo check
+      - name: Test
+        working-directory: Back
+        run: cargo test -- --test-threads=1
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Front/app/package-lock.json
+      - name: Install dependencies
+        working-directory: Front/app
+        run: npm ci
+      - name: Lint
+        working-directory: Front/app
+        run: npm run lint
+      - name: Build
+        working-directory: Front/app
+        run: npm run build

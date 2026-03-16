@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import HomeWsProvider from '@/components/home/home-ws-provider';
 import HomeShell from '@/components/home/home-shell';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomeLayout({
     children,
 }: {
