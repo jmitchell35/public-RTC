@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Klipy API error' }, { status: res.status });
         }
         const data = await res.json();
-        const items: any[] = data.data?.data ?? [];
+        const items: any[] = data.data ?? [];
         const results = items.map((item) => ({
             id: item.id,
             title: item.title ?? '',
-            url: item.files?.original?.url || item.files?.gif?.url || '',
-            preview: item.files?.preview?.url || item.files?.fixed_width?.url || item.files?.original?.url || '',
+            url: item.file?.hd?.gif?.url || item.file?.md?.gif?.url || '',
+            preview: item.file?.sm?.gif?.url || item.file?.md?.gif?.url || item.file?.hd?.gif?.url || '',
         }));
         return NextResponse.json({ results });
     } catch (error) {
