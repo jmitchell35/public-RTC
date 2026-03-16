@@ -24,8 +24,8 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
         setError(null);
         try {
             const url = q.trim()
-                ? `/api/gifs?q=${encodeURIComponent(q.trim())}&limit=16`
-                : `/api/gifs?limit=16`;
+                ? `/api/gifs?q=${encodeURIComponent(q.trim())}&limit=8`
+                : `/api/gifs?limit=8`;
             const res = await fetch(url);
             if (!res.ok) {
                 const data = await res.json().catch(() => null);
@@ -146,11 +146,11 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                             <img
                                 src={gif.preview}
                                 alt={gif.title}
-                                style={{ width: '100%', height: 90, objectFit: 'cover', display: 'block' }}
+                                style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }}
                                 loading="lazy"
                             />
                         ) : (
-                            <div style={{ width: '100%', height: 90, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#94a3b8' }}>
+                            <div style={{ width: '100%', height: 130, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#94a3b8' }}>
                                 {gif.title}
                             </div>
                         )}
