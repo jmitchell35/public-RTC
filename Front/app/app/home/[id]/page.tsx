@@ -129,13 +129,10 @@ export default function ServerPage() {
                     console.warn("friend requests load failed", error);
                 }
 
-                const serverData = (serverResp as any)?.server ?? serverResp;
-                const channelList =
-                    (channelsResp as any)?.channels ?? (channelsResp as any);
-                const memberList =
-                    (membersResp as any)?.members ?? (membersResp as any);
-                const friendList =
-                    (friendsResp as any)?.friends ?? (friendsResp as any) ?? [];
+                const serverData = serverResp.server;
+                const channelList = channelsResp.channels;
+                const memberList = membersResp.members;
+                const friendList = friendsResp.friends ?? [];
 
                 if (!cancelled) {
                     setMe(meResp.user);
@@ -146,9 +143,9 @@ export default function ServerPage() {
                     setFriends(friendList);
                     setFriendRequests(requestsResp);
                 }
-            } catch (err: any) {
+            } catch (err) {
                 if (!cancelled) {
-                    setError(err.message || t("common.error"));
+                    setError(err instanceof Error ? err.message : t("common.error"));
                 }
             } finally {
                 if (!cancelled) {
@@ -251,7 +248,7 @@ export default function ServerPage() {
                 const resp = await fetchJson<{ messages?: ChannelMessage[] }>(
                     `/api/channels/${activeChannelId}/messages?limit=50`
                 );
-                const list = (resp as any)?.messages ?? (resp as any);
+                const list = resp.messages ?? [];
                 if (!cancelled) {
                     const messageList = Array.isArray(list) ? list : [];
                     setMessages(messageList);
@@ -266,9 +263,9 @@ export default function ServerPage() {
                         // ignore cache errors
                     }
                 }
-            } catch (err: any) {
+            } catch (err) {
                 if (!cancelled) {
-                    setError(err.message || t("common.error"));
+                    setError(err instanceof Error ? err.message : t("common.error"));
                 }
             } finally {
                 if (!cancelled) {
@@ -286,7 +283,7 @@ export default function ServerPage() {
         const resp = await fetchJson<{ channels: Channel[] }>(
             `/api/servers/${serverId}/channels`
         );
-        const channelList = (resp as any)?.channels ?? (resp as any);
+        const channelList = resp.channels;
         setChannels(channelList);
         if (!channelList.find((channel: Channel) => channel.id === activeChannelId)) {
             setActiveChannelId(channelList[0]?.id ?? "");
@@ -298,7 +295,7 @@ export default function ServerPage() {
             const resp = await fetchJson<{ members: ServerMember[] }>(
                 `/api/servers/${serverId}/members`
             );
-            const memberList = (resp as any)?.members ?? (resp as any);
+            const memberList = resp.members;
             setMembers(memberList);
         } catch (error) {
             console.warn("refreshMembers failed", error);
@@ -435,8 +432,8 @@ export default function ServerPage() {
             const code = data?.code;
             setInviteCode(code ?? null);
             alert(t("server.invite_code_display", { code }));
-        } catch (err: any) {
-            alert(err.message || t("server.invite_create_failed"));
+        } catch (err) {
+            alert(err instanceof Error ? err.message : t("server.invite_create_failed"));
         }
     };
 
