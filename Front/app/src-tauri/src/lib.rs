@@ -75,6 +75,7 @@ fn launch_sidecar(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
             let url = format!("http://127.0.0.1:{NEXT_PORT}");
             let _ = win.navigate(url.parse().unwrap());
             let _ = win.show();
+            let _ = win.set_focus();
         }
     });
 
