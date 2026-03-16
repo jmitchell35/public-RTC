@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+type KlipyMediaEntry = { url?: string };
+type KlipyMediaSize = { gif?: KlipyMediaEntry; webp?: KlipyMediaEntry; jpg?: KlipyMediaEntry };
+type KlipyItem = {
+    id: number;
+    title?: string;
+    file?: { hd?: KlipyMediaSize; md?: KlipyMediaSize; sm?: KlipyMediaSize; xs?: KlipyMediaSize };
+};
+
 const KLIPY_API_KEY = process.env.KLIPY_API_KEY ?? '';
 const KLIPY_BASE = 'https://api.klipy.com/api/v1';
 
@@ -21,8 +29,8 @@ export async function GET(request: NextRequest) {
         if (!res.ok) {
             return NextResponse.json({ error: 'Klipy API error' }, { status: res.status });
         }
-        const data = await res.json() as { data?: { data?: unknown[] } };
-        const items = ((data.data?.data ?? []) as unknown[]).slice(0, parseInt(limit, 10));
+        const data = await res.json() as { data?: { data?: KlipyItem[] } };
+        const items = (data.data?.data ?? []).slice(0, parseInt(limit, 10));
         const results = items.map((item) => ({
             id: item.id,
             title: item.title ?? '',
