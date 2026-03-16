@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Klipy API error' }, { status: res.status });
         }
         const data = await res.json();
-        const items: any[] = data.data ?? [];
+        const items: any[] = data.data?.data ?? [];
         const results = items.map((item) => ({
             id: item.id,
             title: item.title ?? '',
