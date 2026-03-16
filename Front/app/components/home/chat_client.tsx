@@ -67,6 +67,7 @@ export function ChatClient({
     }, [messages.length]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessages((prev) => {
             const pending = prev.filter((message) =>
                 message.id.startsWith("temp-"),
