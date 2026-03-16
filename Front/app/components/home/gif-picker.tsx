@@ -69,9 +69,9 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
             style={{
                 position: 'absolute',
                 bottom: '100%',
+                left: 0,
                 right: 0,
-                width: 320,
-                maxHeight: 380,
+                height: '33vh',
                 background: 'white',
                 borderRadius: 12,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
@@ -104,7 +104,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                     overflowY: 'auto',
                     padding: 8,
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
                     gap: 6,
                 }}
             >

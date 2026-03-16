@@ -507,14 +507,14 @@ export function ChatClient({
                 })}
                 <div ref={endRef} />
             </div>
-            <div className="home-chat-input">
+            <div className="home-chat-input" style={{ position: 'relative' }}>
                 <div className="home-chat-typing">
                     {typingLabel}
                     {actionError ? (
                         <span className="home-chat-error">{actionError}</span>
                     ) : null}
                 </div>
-                <div className="home-chat-compose" style={{ position: 'relative' }}>
+                <div className="home-chat-compose">
                     {showGifPicker && (
                         <GifPicker
                             onSelect={(url) => {
