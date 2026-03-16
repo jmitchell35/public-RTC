@@ -17,12 +17,12 @@ export async function GET(request: NextRequest) {
         : `${KLIPY_BASE}/${KLIPY_API_KEY}/gifs/trending?limit=${limit}`;
 
     try {
-        const res = await fetch(endpoint, { next: { revalidate: 60 } });
+        const res = await fetch(endpoint, { cache: 'no-store' });
         if (!res.ok) {
             return NextResponse.json({ error: 'Klipy API error' }, { status: res.status });
         }
         const data = await res.json();
-        const items: any[] = data.data?.data ?? [];
+        const items: any[] = (data.data?.data ?? []).slice(0, parseInt(limit, 10));
         const results = items.map((item) => ({
             id: item.id,
             title: item.title ?? '',
