@@ -13,6 +13,10 @@ run = "cd app && npm run dev"
 description = "Build for production"
 run = "cd app && npm run build"
 
+[tasks.start]
+description = "Start production server (run build first)"
+run = "cd app && npm run start"
+
 [tasks.lint]
 description = "Lint the code"
 run = "cd app && npm run lint"

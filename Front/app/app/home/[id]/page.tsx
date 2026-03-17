@@ -96,18 +96,16 @@ export default function ServerPage() {
                         fetchJson<{ members: ServerMember[] }>(`/api/servers/${serverId}/members`),
                     ]);
 
-                let friendsResp: { friends?: UserPublic[] } = {};
-                let requestsResp: FriendRequestsResponse = { incoming: [], outgoing: [] };
-                try {
-                    friendsResp = await fetchJson<{ friends: UserPublic[] }>("/api/friends");
-                } catch (err) {
-                    console.warn("friends load failed", err);
-                }
-                try {
-                    requestsResp = await fetchJson<FriendRequestsResponse>("/api/friends/requests");
-                } catch (err) {
-                    console.warn("friend requests load failed", err);
-                }
+                const [friendsResp, requestsResp] = await Promise.all([
+                    fetchJson<{ friends: UserPublic[] }>("/api/friends").catch((err) => {
+                        console.warn("friends load failed", err);
+                        return { friends: [] } as { friends?: UserPublic[] };
+                    }),
+                    fetchJson<FriendRequestsResponse>("/api/friends/requests").catch((err) => {
+                        console.warn("friend requests load failed", err);
+                        return { incoming: [], outgoing: [] } as FriendRequestsResponse;
+                    }),
+                ]);
 
                 if (!cancelled) {
                     setMe(meResp.user);
