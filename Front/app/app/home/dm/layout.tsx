@@ -11,9 +11,9 @@ export default async function DmLayout({
     const friends = await getFriends();
 
     return (
-        <div className="home-body">
+        <div className="flex flex-1 overflow-hidden">
             <DmSidebar friends={friends} />
-            <div style={{ flex: 1, overflow: 'hidden' }}>
+            <div className="flex-1 overflow-hidden">
                 {children}
             </div>
         </div>
