@@ -29,7 +29,8 @@
     "username": "Username",
     "username_placeholder": "Enter your username",
     "password_create_placeholder": "Create a password",
-    "register_btn": "Sign up"
+    "register_btn": "Sign up",
+    "no_account": "Don't have an account yet?"
   },
   "chat": {
     "loading_messages": "Loading messages...",
