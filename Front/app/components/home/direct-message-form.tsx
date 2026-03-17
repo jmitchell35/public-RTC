@@ -80,6 +80,24 @@ export default function DirectMessageForm({
                         onClose={() => setShowGifPicker(false)}
                     />
                 )}
+                <button
+                    type="button"
+                    onClick={() => setShowGifPicker((v) => !v)}
+                    style={{
+                        padding: '6px 10px',
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        background: '#f8fafc',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#64748b',
+                        whiteSpace: 'nowrap',
+                    }}
+                    title="Send a GIF"
+                >
+                    GIF
+                </button>
                 <input
                     name="content"
                     type="text"
@@ -89,13 +107,6 @@ export default function DirectMessageForm({
                     className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
                     required
                 />
-                <button
-                    type="button"
-                    onClick={() => setShowGifPicker((v) => !v)}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50"
-                >
-                    GIF
-                </button>
                 <button
                     type="submit"
                     disabled={!value.trim()}
