@@ -41,12 +41,8 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
         }
     };
 
-    // Load featured GIFs on mount
-    useEffect(() => {
-        fetchGifs('');
-    }, []);
+    useEffect(() => { fetchGifs(''); }, []);
 
-    // Close on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -66,60 +62,30 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
     return (
         <div
             ref={containerRef}
-            style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: 0,
-                right: 0,
-                height: '33vh',
-                background: 'white',
-                borderRadius: 12,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                zIndex: 100,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                marginBottom: 8,
-            }}
+            className="absolute bottom-full left-0 right-0 z-[100] mb-2 flex h-[33vh] flex-col overflow-hidden rounded-xl bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
         >
-            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="border-b border-slate-100 px-2.5 py-2">
                 <input
                     autoFocus
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
                     placeholder={t('gif.search_placeholder')}
-                    style={{
-                        width: '100%',
-                        padding: '6px 10px',
-                        borderRadius: 8,
-                        border: '1px solid #e2e8f0',
-                        fontSize: 13,
-                        outline: 'none',
-                    }}
+                    className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-[13px] outline-none"
                 />
             </div>
-            <div
-                style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: 8,
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 6,
-                }}
-            >
+            <div className="grid flex-1 grid-cols-4 gap-1.5 overflow-y-auto p-2">
                 {loading && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 24, color: '#94a3b8', fontSize: 13 }}>
+                    <div className="col-span-4 py-6 text-center text-[13px] text-slate-400">
                         {t('common.loading')}
                     </div>
                 )}
                 {error && !loading && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 24, color: '#ef4444', fontSize: 13 }}>
+                    <div className="col-span-4 py-6 text-center text-[13px] text-red-500">
                         {error}
                     </div>
                 )}
                 {!loading && !error && gifs.length === 0 && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 24, color: '#94a3b8', fontSize: 13 }}>
+                    <div className="col-span-4 py-6 text-center text-[13px] text-slate-400">
                         {t('gif.no_results')}
                     </div>
                 )}
@@ -127,18 +93,8 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                     <button
                         key={gif.id}
                         type="button"
-                        onClick={() => {
-                            onSelect(gif.url);
-                            onClose();
-                        }}
-                        style={{
-                            border: 'none',
-                            padding: 0,
-                            cursor: 'pointer',
-                            borderRadius: 8,
-                            overflow: 'hidden',
-                            background: '#f8fafc',
-                        }}
+                        onClick={() => { onSelect(gif.url); onClose(); }}
+                        className="cursor-pointer overflow-hidden rounded-lg border-0 bg-slate-50 p-0"
                         title={gif.title}
                     >
                         {gif.preview ? (
@@ -146,19 +102,19 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                             <img
                                 src={gif.preview}
                                 alt={gif.title}
-                                style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }}
+                                className="block h-[130px] w-full object-cover"
                                 loading="lazy"
                             />
                         ) : (
-                            <div style={{ width: '100%', height: 130, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#94a3b8' }}>
+                            <div className="flex h-[130px] w-full items-center justify-center bg-slate-200 text-[11px] text-slate-400">
                                 {gif.title}
                             </div>
                         )}
                     </button>
                 ))}
             </div>
-            <div style={{ padding: '4px 8px', borderTop: '1px solid #f1f5f9', textAlign: 'right' }}>
-                <span style={{ fontSize: 10, color: '#94a3b8' }}>{t('gif.powered_by')}</span>
+            <div className="border-t border-slate-100 px-2 py-1 text-right">
+                <span className="text-[10px] text-slate-400">{t('gif.powered_by')}</span>
             </div>
         </div>
     );

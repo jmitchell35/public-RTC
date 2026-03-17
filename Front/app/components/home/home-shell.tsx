@@ -29,9 +29,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
             const res = await fetch('/api/servers', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
-                const list = Array.isArray(data?.servers)
-                    ? data.servers
-                    : data ?? [];
+                const list = Array.isArray(data?.servers) ? data.servers : data ?? [];
                 setServers(
                     list.map((server: { id: string; name: string }) => ({
                         id: server.id,
@@ -50,62 +48,36 @@ export default function HomeShell({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    useEffect(() => {
-        fetchServers();
-    }, [fetchServers, pathname]);
+    useEffect(() => { fetchServers(); }, [fetchServers, pathname]);
 
     useEffect(() => {
-        const handler = () => {
-            fetchServers();
-        };
+        const handler = () => { fetchServers(); };
         window.addEventListener('servers-refresh', handler);
-        return () => {
-            window.removeEventListener('servers-refresh', handler);
-        };
+        return () => { window.removeEventListener('servers-refresh', handler); };
     }, [fetchServers]);
 
     useEffect(() => {
         const handler = (event: Event) => {
             const custom = event as CustomEvent<{ id?: string }>;
-            if (!custom.detail?.id) {
-                return;
-            }
-            setServers((prev) =>
-                prev.filter((server) => server.id !== custom.detail?.id),
-            );
+            if (!custom.detail?.id) return;
+            setServers((prev) => prev.filter((s) => s.id !== custom.detail?.id));
         };
         window.addEventListener('servers-remove', handler as EventListener);
-        return () => {
-            window.removeEventListener('servers-remove', handler as EventListener);
-        };
+        return () => { window.removeEventListener('servers-remove', handler as EventListener); };
     }, []);
 
     useEffect(() => {
-        if (!ws || !isConnected) {
-            return;
-        }
-        servers.forEach((server) => {
-            ws.send({
-                type: 'SubscribeServer',
-                data: { server_id: server.id },
-            });
-        });
+        if (!ws || !isConnected) return;
+        servers.forEach((s) => ws.send({ type: 'SubscribeServer', data: { server_id: s.id } }));
     }, [ws, isConnected, servers]);
 
     useEffect(() => {
-        if (!ws) {
-            return;
-        }
+        if (!ws) return;
         return ws.addListener((wsEvent) => {
             if (wsEvent.type === 'Notification') {
                 setServers((prev) =>
-                    prev.map((server) =>
-                        server.id === wsEvent.data.server_id
-                            ? {
-                                  ...server,
-                                  notif: (server.notif ?? 0) + 1,
-                              }
-                            : server,
+                    prev.map((s) =>
+                        s.id === wsEvent.data.server_id ? { ...s, notif: (s.notif ?? 0) + 1 } : s,
                     ),
                 );
             }
@@ -113,9 +85,7 @@ export default function HomeShell({ children }: { children: ReactNode }) {
     }, [ws]);
 
     const createServer = async () => {
-        if (!newServerName.trim()) {
-            return;
-        }
+        if (!newServerName.trim()) return;
         const res = await fetch('/api/servers', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -127,22 +97,16 @@ export default function HomeShell({ children }: { children: ReactNode }) {
             setShowDialog(false);
             await fetchServers();
             if (data?.server?.id) {
-                ws?.send({
-                    type: 'SubscribeServer',
-                    data: { server_id: data.server.id },
-                });
+                ws?.send({ type: 'SubscribeServer', data: { server_id: data.server.id } });
             }
         } else {
             const text = await res.text();
-            console.error('create server error', res.status, text);
             alert(t('shell.create_failed', { status: res.status, text }));
         }
     };
 
     const joinServer = async () => {
-        if (!inviteCode.trim()) {
-            return;
-        }
+        if (!inviteCode.trim()) return;
         const res = await fetch(`/api/invites/${inviteCode.trim()}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -155,169 +119,83 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                 const res2 = await fetch('/api/servers', { cache: 'no-store' });
                 if (res2.ok) {
                     const data = await res2.json();
-                    const list = Array.isArray(data?.servers)
-                        ? data.servers
-                        : data ?? [];
-                    list.forEach((server: { id: string }) => {
-                        ws?.send({
-                            type: 'SubscribeServer',
-                            data: { server_id: server.id },
-                        });
+                    const list = Array.isArray(data?.servers) ? data.servers : data ?? [];
+                    list.forEach((s: { id: string }) => {
+                        ws?.send({ type: 'SubscribeServer', data: { server_id: s.id } });
                     });
                     const newest = list[0];
-                    if (newest?.id) {
-                        router.push(`/home/${newest.id}`);
-                    }
+                    if (newest?.id) router.push(`/home/${newest.id}`);
                 }
-            } catch {
-                // ignore
-            }
+            } catch { /* ignore */ }
         } else {
             const text = await res.text();
-            console.error('join server error', res.status, text);
             alert(t('shell.join_failed', { status: res.status, text }));
         }
     };
 
     const content = useMemo(() => {
-        if (!loading) {
-            return children;
-        }
-        return <div style={{ padding: 16 }}>{t('common.loading')}</div>;
+        if (!loading) return children;
+        return <div className="p-4">{t('common.loading')}</div>;
     }, [children, loading, t]);
 
     return (
-        <div className="home-root">
+        <div className="flex h-screen overflow-hidden bg-[#eef2f7] text-slate-950">
             <ServerBar
                 servers={servers}
                 activeId={activeId}
                 onSelect={(id) => {
-                    setServers((prev) =>
-                        prev.map((server) =>
-                            server.id === id ? { ...server, notif: 0 } : server,
-                        ),
-                    );
+                    setServers((prev) => prev.map((s) => s.id === id ? { ...s, notif: 0 } : s));
                     router.push(`/home/${id}`);
                 }}
                 onAdd={() => setShowDialog(true)}
             />
-            <div className="home-main">{content}</div>
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">{content}</div>
 
             {showDialog ? (
                 <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.35)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 50,
-                    }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35"
                     onClick={() => setShowDialog(false)}
                 >
                     <div
-                        style={{
-                            background: 'white',
-                            padding: '20px',
-                            borderRadius: '12px',
-                            width: '360px',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                        }}
-                        onClick={(event) => event.stopPropagation()}
+                        className="w-[360px] rounded-xl bg-white p-5 shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
-                            {t('shell.server_dialog_title')}
-                        </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <h3 className="mb-3 text-lg font-bold">{t('shell.server_dialog_title')}</h3>
+                        <div className="flex flex-col gap-2.5">
                             <div>
-                                <label style={{ fontSize: 12, color: '#475569' }}>
-                                    {t('shell.server_name_label')}
-                                </label>
+                                <label className="text-xs text-slate-600">{t('shell.server_name_label')}</label>
                                 <input
                                     value={newServerName}
-                                    onChange={(event) =>
-                                        setNewServerName(event.target.value)
-                                    }
+                                    onChange={(e) => setNewServerName(e.target.value)}
                                     placeholder={t('shell.server_name_placeholder')}
-                                    style={{
-                                        width: '100%',
-                                        marginTop: 4,
-                                        padding: '10px 12px',
-                                        borderRadius: 10,
-                                        border: '1px solid #e2e8f0',
-                                    }}
+                                    className="mt-1 w-full rounded-[10px] border border-slate-200 px-3 py-2.5"
                                 />
                                 <button
                                     onClick={createServer}
-                                    style={{
-                                        marginTop: 8,
-                                        width: '100%',
-                                        padding: '10px',
-                                        borderRadius: 10,
-                                        border: 'none',
-                                        background: 'linear-gradient(135deg,#4f46e5,#6366f1)',
-                                        color: 'white',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                    }}
+                                    className="mt-2 w-full cursor-pointer rounded-[10px] border-0 bg-gradient-to-br from-indigo-600 to-indigo-500 py-2.5 font-bold text-white"
                                 >
                                     {t('common.create')}
                                 </button>
                             </div>
-                            <div
-                                style={{
-                                    height: 1,
-                                    background: '#e2e8f0',
-                                    margin: '4px 0',
-                                }}
-                            />
+                            <div className="my-1 h-px bg-slate-200" />
                             <div>
-                                <label style={{ fontSize: 12, color: '#475569' }}>
-                                    {t('shell.invite_code_label')}
-                                </label>
+                                <label className="text-xs text-slate-600">{t('shell.invite_code_label')}</label>
                                 <input
                                     value={inviteCode}
-                                    onChange={(event) =>
-                                        setInviteCode(event.target.value)
-                                    }
+                                    onChange={(e) => setInviteCode(e.target.value)}
                                     placeholder={t('shell.invite_code_placeholder')}
-                                    style={{
-                                        width: '100%',
-                                        marginTop: 4,
-                                        padding: '10px 12px',
-                                        borderRadius: 10,
-                                        border: '1px solid #e2e8f0',
-                                    }}
+                                    className="mt-1 w-full rounded-[10px] border border-slate-200 px-3 py-2.5"
                                 />
                                 <button
                                     onClick={joinServer}
-                                    style={{
-                                        marginTop: 8,
-                                        width: '100%',
-                                        padding: '10px',
-                                        borderRadius: 10,
-                                        border: 'none',
-                                        background: '#0ea5e9',
-                                        color: 'white',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                    }}
+                                    className="mt-2 w-full cursor-pointer rounded-[10px] border-0 bg-sky-500 py-2.5 font-bold text-white"
                                 >
                                     {t('common.join')}
                                 </button>
                             </div>
                             <button
                                 onClick={() => setShowDialog(false)}
-                                style={{
-                                    marginTop: 6,
-                                    width: '100%',
-                                    padding: '8px',
-                                    borderRadius: 10,
-                                    border: '1px solid #e2e8f0',
-                                    background: '#f8fafc',
-                                    cursor: 'pointer',
-                                }}
+                                className="mt-1.5 w-full cursor-pointer rounded-[10px] border border-slate-200 bg-slate-50 py-2"
                             >
                                 {t('common.close')}
                             </button>

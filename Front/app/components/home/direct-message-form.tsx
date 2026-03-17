@@ -85,17 +85,7 @@ export default function DirectMessageForm({
                 <button
                     type="button"
                     onClick={() => setShowGifPicker((v) => !v)}
-                    style={{
-                        padding: '6px 10px',
-                        borderRadius: 8,
-                        border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
-                        cursor: 'pointer',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#64748b',
-                        whiteSpace: 'nowrap',
-                    }}
+                    className="cursor-pointer whitespace-nowrap rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100"
                     title={t('gif.send_gif')}
                 >
                     GIF

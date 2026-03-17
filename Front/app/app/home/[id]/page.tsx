@@ -420,15 +420,15 @@ export default function ServerPage() {
 
     return (
         <>
-            <header className="home-header">
-                <div className="home-header-left">
-                    <div className="home-server-icon-lg">
+            <header className="flex h-16 items-center justify-between bg-white px-6 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-600 to-indigo-500 font-bold text-white">
                         {server.name?.[0]?.toUpperCase() ?? "S"}
                     </div>
-                    <div className="home-header-text">
-                        <div className="home-server-name">{server.name}</div>
-                        <div className="home-server-status">
-                            <span className="home-status-dot" />
+                    <div className="flex flex-col gap-1">
+                        <div className="text-[17px] font-semibold">{server.name}</div>
+                        <div className="flex items-center gap-1.5 text-[13px] text-emerald-600">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
                             <span>
                                 {t("server.online_count", {
                                     count: members.filter((m) => m.online).length,
@@ -437,7 +437,7 @@ export default function ServerPage() {
                         </div>
                     </div>
                 </div>
-                <div className="home-header-actions">
+                <div className="flex gap-2.5">
                     {isOwner ? (
                         <SecondaryButton
                             label={t("server.roles_btn")}
@@ -446,8 +446,7 @@ export default function ServerPage() {
                     ) : null}
                     {canInvite ? (
                         <button
-                            className="home-btn home-btn-secondary"
-                            style={{ padding: "10px 14px" }}
+                            className="cursor-pointer rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm font-bold text-slate-950 hover:bg-slate-200"
                             onClick={handleInvite}
                         >
                             {t("server.invite_btn")}
@@ -461,7 +460,7 @@ export default function ServerPage() {
                 </div>
             </header>
 
-            <div className="home-body">
+            <div className="flex flex-1 overflow-hidden">
                 <ChannelSidebar
                     channels={channels}
                     activeChannelId={activeChannelId}
@@ -472,7 +471,7 @@ export default function ServerPage() {
                     onDelete={handleDeleteChannel}
                 />
 
-                <main className="home-content">
+                <main className="grid min-w-0 flex-1 grid-cols-[2fr_1fr]">
                     <ChatClient
                         key={activeChannelId}
                         channelId={activeChannelId}
