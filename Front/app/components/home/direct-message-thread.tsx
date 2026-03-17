@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import type { DirectMessage, UserPublic } from '@/lib/types';
+import { mergeMessages } from '@/lib/messages';
 import DirectMessageForm from '@/components/home/direct-message-form';
 import { useHomeWs } from '@/components/home/home-ws-provider';
 
@@ -20,18 +21,6 @@ const statusDots: Record<string, string> = {
     dnd: 'bg-red-500',
 };
 
-function mergeMessages(
-    existing: DirectMessage[],
-    incoming: DirectMessage[],
-) {
-    const map = new Map(existing.map((message) => [message.id, message]));
-    for (const message of incoming) {
-        map.set(message.id, message);
-    }
-    return Array.from(map.values()).sort(
-        (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
-    );
-}
 
 export default function DirectMessageThread({
     me,

@@ -6,6 +6,7 @@ import { PrimaryButton } from "./buttons";
 import { GifPicker } from "./gif-picker";
 import { useHomeWs } from "@/components/home/home-ws-provider";
 import type { ChannelMessage, ServerMember } from "@/lib/types";
+import { mergeMessages } from "@/lib/messages";
 
 type Props = {
     channelId: string;
@@ -17,19 +18,6 @@ type Props = {
 };
 
 const TYPING_IDLE_MS = 1400;
-
-function mergeMessages(
-    existing: ChannelMessage[],
-    incoming: ChannelMessage[],
-) {
-    const map = new Map(existing.map((message) => [message.id, message]));
-    for (const message of incoming) {
-        map.set(message.id, message);
-    }
-    return Array.from(map.values()).sort(
-        (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
-    );
-}
 
 export function ChatClient({
     channelId,
