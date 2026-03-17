@@ -18,7 +18,7 @@ import Link from 'next/link';
 export default function RegisterForm() {
     const { t } = useTranslation();
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get('callbackUrl') || '/home';
+    const callbackUrl = searchParams.get('callbackUrl') || '/home/dm';
     const [errorMessage, formAction, isPending] = useActionState(
         registerUser,
         undefined,

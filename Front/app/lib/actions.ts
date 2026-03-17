@@ -92,7 +92,7 @@ export async function authenticate(
         path: '/',
     });
 
-    redirect(parsed.data.redirectTo || '/home');
+    redirect(parsed.data.redirectTo || '/home/dm');
 }
 
 export async function registerUser(
@@ -154,7 +154,7 @@ export async function registerUser(
         path: '/',
     });
 
-    redirect(parsed.data.redirectTo || '/home');
+    redirect(parsed.data.redirectTo || '/home/dm');
 }
 
 export async function updateUser(
@@ -241,7 +241,7 @@ export async function updateUser(
         return errorBody?.error ?? 'Something went wrong.';
     }
 
-    redirect(parsed.data.redirectTo || '/home');
+    redirect(parsed.data.redirectTo || '/home/dm');
 }
 
 export async function deleteAccount(
