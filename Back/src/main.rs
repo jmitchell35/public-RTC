@@ -1,6 +1,7 @@
 use rtc_backend::{
     api,
     auth::JwtConfig,
+    db,
     state::AppState,
     utils::config::Config,
     ws::handler::ws_handler,
@@ -30,6 +31,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .connect(&config.database_url)
         .await?;
 
+
+    db::run_migrations(&pool).await?;
 
     let jwt = JwtConfig::new(config.jwt_secret, config.jwt_exp_seconds);
     let state = AppState::new(pool, jwt);
