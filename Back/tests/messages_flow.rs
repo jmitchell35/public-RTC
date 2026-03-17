@@ -54,7 +54,7 @@ async fn channel_and_message_flow() {
     let message = db::messages::create(&pool, channel.id, owner_id, "hello")
         .await
         .expect("create message");
-    let list = db::messages::list_for_channel(&pool, channel.id, 50, 0)
+    let list = db::messages::list_for_channel(&pool, channel.id, 50, None)
         .await
         .expect("list messages");
     assert_eq!(list.len(), 1);
