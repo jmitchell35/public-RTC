@@ -403,9 +403,18 @@ export default function DirectMessageThread({
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-wrap items-baseline gap-2">
-                                                    <span className="whitespace-pre-wrap break-words">
-                                                        {message.content}
-                                                    </span>
+                                                    {/^https?:\/\/.+\.(gif|webp)(\?.*)?$/i.test(message.content) ? (
+                                                        <img
+                                                            src={message.content}
+                                                            alt="gif"
+                                                            className="max-w-[240px] rounded-lg"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <span className="whitespace-pre-wrap break-words">
+                                                            {message.content}
+                                                        </span>
+                                                    )}
                                                     {message.edited_at ? (
                                                         <span
                                                             className={`text-[10px] ${
