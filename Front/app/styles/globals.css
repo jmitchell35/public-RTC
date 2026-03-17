@@ -19,7 +19,8 @@ input[type='number']::-webkit-outer-spin-button {
 
 /* ====== Home layout (Discord-like) ====== */
 .home-root {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   background: #eef2f7;
   color: #0f172a;
@@ -27,6 +28,7 @@ input[type='number']::-webkit-outer-spin-button {
 
 .home-servers {
   width: 80px;
+  height: 100%;
   background: #0b1224;
   color: #fff;
   display: flex;
@@ -35,6 +37,8 @@ input[type='number']::-webkit-outer-spin-button {
   padding: 16px 0;
   gap: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .home-logo {
@@ -141,8 +145,11 @@ input[type='number']::-webkit-outer-spin-button {
 
 .home-main {
   flex: 1;
+  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .home-header {
