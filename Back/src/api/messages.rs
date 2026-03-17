@@ -203,7 +203,7 @@ pub async fn pin_message(
         .ok_or(ApiError::NotFound)?;
     state.ws_hub.broadcast_channel(
         channel.id,
-        WsEvent::MessagePinned { message_id, pinned: true },
+        WsEvent::MessagePinned { channel_id: channel.id, message_id, pinned: true },
     );
     Ok(Json(MessageResponse { message }))
 }
@@ -230,7 +230,7 @@ pub async fn unpin_message(
         .ok_or(ApiError::NotFound)?;
     state.ws_hub.broadcast_channel(
         channel.id,
-        WsEvent::MessagePinned { message_id, pinned: false },
+        WsEvent::MessagePinned { channel_id: channel.id, message_id, pinned: false },
     );
     Ok(Json(MessageResponse { message }))
 }
@@ -260,6 +260,7 @@ pub async fn add_reaction(
     state.ws_hub.broadcast_channel(
         channel.id,
         WsEvent::ReactionAdded {
+            channel_id: channel.id,
             message_id,
             reaction: reaction.clone(),
         },
@@ -290,6 +291,7 @@ pub async fn remove_reaction(
     state.ws_hub.broadcast_channel(
         channel.id,
         WsEvent::ReactionRemoved {
+            channel_id: channel.id,
             message_id,
             user_id: user.user_id,
             emoji: payload.emoji.clone(),

@@ -40,11 +40,12 @@ export type WsEvent =
       }
     | {
           type: 'MessagePinned';
-          data: { message_id: string; pinned: boolean };
+          data: { channel_id: string; message_id: string; pinned: boolean };
       }
     | {
           type: 'ReactionAdded';
           data: {
+              channel_id: string;
               message_id: string;
               reaction: {
                   message_id: string;
@@ -56,7 +57,7 @@ export type WsEvent =
       }
     | {
           type: 'ReactionRemoved';
-          data: { message_id: string; user_id: string; emoji: string };
+          data: { channel_id: string; message_id: string; user_id: string; emoji: string };
       }
     | {
           type: 'FriendRequestCreated';
