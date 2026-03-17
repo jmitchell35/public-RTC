@@ -100,10 +100,10 @@ export function getWsUrlCandidates(
     );
 
     const candidates = [
-        windowCandidate,
         ...extraCandidates,
         ...envWs,
         ...envHttp,
+        windowCandidate,
         ...fallback,
     ].filter(Boolean);
 
