@@ -218,12 +218,15 @@ input[type='number']::-webkit-outer-spin-button {
 
 .home-channels {
   width: 250px;
+  height: 100%;
+  overflow: hidden;
   background: #fff;
   border-right: 1px solid #e2e8f0;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-sizing: border-box;
 }
 
 .home-channels-title {
@@ -256,6 +259,9 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 .home-channels-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;

@@ -19,7 +19,7 @@ export default function DmSidebar({ friends }: { friends: UserPublic[] }) {
             <div className="home-channels-title">
                 Direct Messages
             </div>
-            <nav className="home-channels-list" style={{ flex: 1, overflowY: 'auto' }}>
+            <nav className="home-channels-list">
                 {friends.length === 0 && (
                     <p style={{ fontSize: 12, color: '#94a3b8', padding: '4px 0' }}>
                         No friends yet.
