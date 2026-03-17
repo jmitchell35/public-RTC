@@ -6,7 +6,7 @@ use crate::{
     utils::{validation, ApiError, ApiResult},
     ws::WsEvent,
 };
-use super::guards::{ensure_member, ensure_role};
+use super::guards::{add_member_to_server, ensure_member, ensure_role};
 use axum::{extract::{Path, State}, routing::{delete, get, post, put}, Extension, Json, Router};
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -157,16 +157,7 @@ pub async fn join_server(
     if invite.server_id != server_id {
         return Err(ApiError::BadRequest("invite does not match server".to_string()));
     }
-    if db::bans::get_active_ban(&state.db, server_id, user.user_id).await?.is_some() {
-        return Err(ApiError::Forbidden);
-    }
-    if db::members::get_role(&state.db, server_id, user.user_id).await?.is_some() {
-        return Err(ApiError::Conflict("already a member".to_string()));
-    }
-    db::members::add_member(&state.db, server_id, user.user_id, Role::Member).await?;
-    state
-        .ws_hub
-        .broadcast_server(server_id, WsEvent::ServerMembersUpdated { server_id });
+    add_member_to_server(&state, server_id, user.user_id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -176,19 +167,7 @@ pub async fn join_by_invite(
     Path(code): Path<String>,
 ) -> Result<axum::http::StatusCode, ApiError> {
     let invite = db::invites::use_invite(&state.db, &code).await?;
-    if db::bans::get_active_ban(&state.db, invite.server_id, user.user_id).await?.is_some() {
-        return Err(ApiError::Forbidden);
-    }
-    if db::members::get_role(&state.db, invite.server_id, user.user_id).await?.is_some() {
-        return Err(ApiError::Conflict("already a member".to_string()));
-    }
-    db::members::add_member(&state.db, invite.server_id, user.user_id, Role::Member).await?;
-    state.ws_hub.broadcast_server(
-        invite.server_id,
-        WsEvent::ServerMembersUpdated {
-            server_id: invite.server_id,
-        },
-    );
+    add_member_to_server(&state, invite.server_id, user.user_id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
