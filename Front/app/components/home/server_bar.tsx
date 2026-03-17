@@ -1,3 +1,5 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { HomeIcon } from "@heroicons/react/24/solid";
