@@ -1,15 +1,19 @@
-export default function DmIndexPage() {
+import HomeClient from '@/components/home/home-client';
+import { getFriendRequests, getFriends, getMe } from '@/lib/friend-actions';
+
+export default async function DmIndexPage() {
+    const [meResponse, friends, requests] = await Promise.all([
+        getMe(),
+        getFriends(),
+        getFriendRequests(),
+    ]);
+
     return (
-        <div style={{
-            display: 'flex',
-            flex: 1,
-            height: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#94a3b8',
-            fontSize: 14,
-        }}>
-            Select a conversation to start messaging.
-        </div>
+        <HomeClient
+            initialMe={meResponse?.user ?? null}
+            initialFriends={friends}
+            initialRequests={requests}
+            initialTab="friends"
+        />
     );
 }
