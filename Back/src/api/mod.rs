@@ -5,6 +5,7 @@ pub mod auth;
 pub mod channels;
 pub mod dm;
 pub mod friends;
+pub mod guards;
 pub mod messages;
 pub mod servers;
 pub mod users;

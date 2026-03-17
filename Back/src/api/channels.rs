@@ -5,6 +5,7 @@ use crate::{
     state::AppState,
     utils::{validation, ApiError, ApiResult},
 };
+use super::guards::ensure_role;
 use axum::{extract::{Path, State}, routing::{get, post}, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -106,17 +107,4 @@ pub async fn delete_channel(
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
-async fn ensure_role(
-    state: &AppState,
-    server_id: Uuid,
-    user_id: Uuid,
-    required: Role,
-) -> Result<Role, ApiError> {
-    let role = db::members::get_role(&state.db, server_id, user_id)
-        .await?
-        .ok_or(ApiError::Forbidden)?;
-    if !role.allows(required) {
-        return Err(ApiError::Forbidden);
-    }
-    Ok(role)
-}
+
