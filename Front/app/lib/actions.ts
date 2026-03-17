@@ -88,7 +88,7 @@ export async function authenticate(
     cookieStore.set('auth_token', data.token, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.SECURE_COOKIE === 'true',
         path: '/',
     });
 
@@ -150,7 +150,7 @@ export async function registerUser(
     cookieStore.set('auth_token', data.token, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.SECURE_COOKIE === 'true',
         path: '/',
     });
 
