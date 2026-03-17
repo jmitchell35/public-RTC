@@ -52,7 +52,38 @@ The WebSocket URL is derived automatically from the HTTP base URL (`http://` →
 
 ## Desktop app (Tauri 2)
 
-The app is also available as a native desktop app (Windows, macOS, Linux):
+The app is also available as a native desktop app (Windows, macOS, Linux).
+
+### Prerequisites
+
+Tauri requires a Rust toolchain plus platform-specific system dependencies.
+
+**All platforms**
+```bash
+curl https://sh.rustup.rs -sSf | sh   # Rust stable toolchain
+cargo install tauri-cli --version "^2"
+```
+
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt update && sudo apt install -y \
+  libwebkit2gtk-4.1-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  patchelf
+```
+
+**macOS**
+```bash
+xcode-select --install
+```
+
+**Windows**
+
+Install [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the "Desktop development with C++" workload, then install [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (bundled on Windows 11).
+
+### Build and run
 
 ```bash
 # Dev mode
@@ -61,6 +92,12 @@ npm run tauri:dev
 
 # Production build
 npm run tauri:build
+```
+
+Or via mise from `Front/`:
+```bash
+mise run desktop          # dev mode
+mise run desktop-build    # release build
 ```
 
 macOS builds are universal binaries (x86_64 + aarch64). System notifications are supported via `@tauri-apps/plugin-notification`.
