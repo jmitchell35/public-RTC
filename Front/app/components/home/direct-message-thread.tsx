@@ -8,6 +8,7 @@ import type { DirectMessage, UserPublic } from '@/lib/types';
 import { mergeMessages } from '@/lib/messages';
 import DirectMessageForm from '@/components/home/direct-message-form';
 import { useHomeWs } from '@/components/home/home-ws-provider';
+import { MessageBubble } from '@/components/home/message-bubble';
 
 type DirectMessageThreadProps = {
     me: UserPublic;
@@ -312,127 +313,22 @@ export default function DirectMessageThread({
                             const isMe = message.author_id === me.id;
                             const isEditing = editingId === message.id;
                             const isTemp = message.id.startsWith('temp-');
-                            const bubbleClass = isEditing
-                                ? 'bg-white text-slate-800 border border-slate-200'
-                                : isMe
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-white text-slate-800';
                             return (
-                                <div
+                                <MessageBubble
                                     key={message.id}
-                                    className={`flex ${
-                                        isMe ? 'justify-end' : 'justify-start'
-                                    }`}
-                                >
-                                    <div
-                                        className={`group flex max-w-[70%] flex-col ${
-                                            isMe ? 'items-end' : 'items-start'
-                                        }`}
-                                    >
-                                        <div
-                                            className={`w-full rounded-2xl px-4 py-2 text-sm shadow-sm ${bubbleClass}`}
-                                        >
-                                            {isEditing ? (
-                                                <div className="flex flex-col gap-2">
-                                                    <input
-                                                        value={editingValue}
-                                                        onChange={(event) =>
-                                                            setEditingValue(
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        onKeyDown={(event) => {
-                                                            if (
-                                                                event.key ===
-                                                                'Enter'
-                                                            ) {
-                                                                event.preventDefault();
-                                                                saveEdit();
-                                                            }
-                                                            if (
-                                                                event.key ===
-                                                                'Escape'
-                                                            ) {
-                                                                event.preventDefault();
-                                                                cancelEdit();
-                                                            }
-                                                        }}
-                                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
-                                                        autoFocus
-                                                    />
-                                                    <div className="flex justify-end gap-2 text-xs">
-                                                        <button
-                                                            type="button"
-                                                            onClick={cancelEdit}
-                                                            className="rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50"
-                                                        >
-                                                            {t('common.cancel')}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={saveEdit}
-                                                            disabled={
-                                                                !editingValue.trim()
-                                                            }
-                                                            className="rounded-md bg-blue-500 px-2 py-1 font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        >
-                                                            {t('common.save')}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-wrap items-baseline gap-2">
-                                                    {/^https?:\/\/.+\.(gif|webp)(\?.*)?$/i.test(message.content) ? (
-                                                        <img
-                                                            src={message.content}
-                                                            alt="gif"
-                                                            className="max-w-[240px] rounded-lg"
-                                                            loading="lazy"
-                                                        />
-                                                    ) : (
-                                                        <span className="whitespace-pre-wrap break-words">
-                                                            {message.content}
-                                                        </span>
-                                                    )}
-                                                    {message.edited_at ? (
-                                                        <span
-                                                            className={`text-[10px] ${
-                                                                isMe
-                                                                    ? 'text-white/70'
-                                                                    : 'text-slate-400'
-                                                            }`}
-                                                        >
-                                                            {t('chat.edited')}
-                                                        </span>
-                                                    ) : null}
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isMe && !isEditing && !isTemp ? (
-                                            <div className="mt-1 flex gap-2 text-[11px] text-slate-400 opacity-0 transition group-hover:opacity-100">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        startEdit(message)
-                                                    }
-                                                    className="hover:text-slate-600"
-                                                >
-                                                    {t('common.edit')}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        removeMessage(message)
-                                                    }
-                                                    className="hover:text-red-500"
-                                                >
-                                                    {t('common.delete')}
-                                                </button>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </div>
+                                    variant="dm"
+                                    content={message.content}
+                                    isMe={isMe}
+                                    isTemp={isTemp}
+                                    editedAt={message.edited_at}
+                                    isEditing={isEditing}
+                                    editValue={editingValue}
+                                    onEditChange={setEditingValue}
+                                    onSaveEdit={saveEdit}
+                                    onCancelEdit={cancelEdit}
+                                    onStartEdit={() => startEdit(message)}
+                                    onDelete={() => removeMessage(message)}
+                                />
                             );
                         })
                     )}

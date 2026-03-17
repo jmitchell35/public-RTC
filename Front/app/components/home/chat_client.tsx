@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { PrimaryButton } from "./buttons";
 import { GifPicker } from "./gif-picker";
 import { useHomeWs } from "@/components/home/home-ws-provider";
+import { MessageBubble } from "@/components/home/message-bubble";
 import type { ChannelMessage, MessageReaction, ServerMember } from "@/lib/types";
 import { mergeMessages } from "@/lib/messages";
 
@@ -304,8 +305,10 @@ export function ChatClient({
                     const isMe = message.author_id === currentUserId;
                     const isEditing = editingId === message.id;
                     const isTemp = message.id.startsWith("temp-");
-                    const isGif = /^https?:\/\/.+\.(gif|webp)(\?.*)?$/i.test(message.content);
-                    const msgReactions = reactions[message.id] ?? [];
+                    const msgReactions = (reactions[message.id] ?? []).reduce<Record<string, number>>(
+                        (acc, r) => ({ ...acc, [r.emoji]: (acc[r.emoji] ?? 0) + 1 }),
+                        {},
+                    );
 
                     return (
                         <div
@@ -315,96 +318,24 @@ export function ChatClient({
                             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-600 font-bold text-white">
                                 {author[0] ?? "?"}
                             </div>
-                            <div
-                                className={clsx(
-                                    "rounded-xl px-3 py-2.5 shadow-[0_6px_16px_rgba(15,23,42,0.05)]",
-                                    isMe
-                                        ? "bg-gradient-to-br from-indigo-600 to-indigo-500 text-white"
-                                        : "bg-white",
-                                )}
-                            >
-                                <div
-                                    className={clsx(
-                                        "mb-1 flex items-center gap-2 text-[13px]",
-                                        isMe && "justify-end gap-3",
-                                    )}
-                                >
-                                    <span className={clsx("font-bold", isMe ? "text-indigo-100" : "text-slate-950")}>
-                                        {author}
-                                    </span>
-                                    <span className={isMe ? "text-indigo-200" : "text-slate-400"}>
-                                        {new Date(message.created_at).toLocaleTimeString()}
-                                    </span>
-                                    {message.edited_at ? (
-                                        <span className={clsx("text-[11px]", isMe ? "text-indigo-200" : "text-slate-400")}>
-                                            {t("chat.edited")}
-                                        </span>
-                                    ) : null}
-                                </div>
-
-                                {isEditing ? (
-                                    <div className="flex flex-col gap-2">
-                                        <input
-                                            value={editingValue}
-                                            onChange={(e) => setEditingValue(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") { e.preventDefault(); saveEdit(); }
-                                                if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
-                                            }}
-                                            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-950 outline-none transition-all focus:border-indigo-200 focus:bg-white focus:ring focus:ring-indigo-500/20"
-                                        />
-                                        <div className="flex gap-2.5 text-xs text-slate-400">
-                                            <button type="button" onClick={cancelEdit} className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-slate-950">
-                                                {t("common.cancel")}
-                                            </button>
-                                            <button type="button" onClick={saveEdit} disabled={!editingValue.trim()} className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60">
-                                                {t("common.save")}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : isGif ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={message.content}
-                                        alt="GIF"
-                                        className="block max-w-[240px] rounded-lg"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div className={clsx("leading-relaxed", isMe ? "text-white" : "text-gray-800")}>
-                                        {message.content}
-                                    </div>
-                                )}
-
-                                {isMe && !isEditing && !isTemp ? (
-                                    <div className="mt-1.5 flex gap-2.5 text-xs text-indigo-200">
-                                        <button type="button" onClick={() => startEdit(message)} className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-white">
-                                            {t("common.edit")}
-                                        </button>
-                                        <button type="button" onClick={() => removeMessage(message)} className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-white">
-                                            {t("common.delete")}
-                                        </button>
-                                    </div>
-                                ) : null}
-
-                                {message.pinned ? (
-                                    <span className="mt-1 text-[11px] opacity-70">📌</span>
-                                ) : null}
-                                {msgReactions.length > 0 ? (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {Object.entries(
-                                            msgReactions.reduce<Record<string, number>>(
-                                                (acc, r) => ({ ...acc, [r.emoji]: (acc[r.emoji] ?? 0) + 1 }),
-                                                {},
-                                            ),
-                                        ).map(([emoji, count]) => (
-                                            <span key={emoji} className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
-                                                {emoji} {count}
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : null}
-                            </div>
+                            <MessageBubble
+                                variant="channel"
+                                content={message.content}
+                                isMe={isMe}
+                                isTemp={isTemp}
+                                editedAt={message.edited_at}
+                                pinned={message.pinned}
+                                reactions={msgReactions}
+                                authorName={author}
+                                createdAt={message.created_at}
+                                isEditing={isEditing}
+                                editValue={editingValue}
+                                onEditChange={setEditingValue}
+                                onSaveEdit={saveEdit}
+                                onCancelEdit={cancelEdit}
+                                onStartEdit={() => startEdit(message)}
+                                onDelete={() => removeMessage(message)}
+                            />
                         </div>
                     );
                 })}
