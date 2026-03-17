@@ -30,7 +30,8 @@
     "username_placeholder": "Enter your username",
     "password_create_placeholder": "Create a password",
     "register_btn": "Sign up",
-    "no_account": "Don't have an account yet?"
+    "no_account": "Don't have an account yet?",
+    "already_account": "Already have an account?"
   },
   "chat": {
     "loading_messages": "Loading messages...",

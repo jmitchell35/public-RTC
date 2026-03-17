@@ -13,6 +13,7 @@ import { useActionState } from 'react';
 import { registerUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import Link from 'next/link';
 
 export default function RegisterForm() {
     const { t } = useTranslation();
@@ -110,6 +111,12 @@ export default function RegisterForm() {
                         </>
                     )}
                 </div>
+                <p className="mt-2 text-center text-sm text-gray-500">
+                    {t('auth.already_account')}{' '}
+                    <Link href="/login" className="font-medium text-blue-500 hover:text-blue-400">
+                        {t('auth.login_btn')}
+                    </Link>
+                </p>
             </div>
         </form>
     );
