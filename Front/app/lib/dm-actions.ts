@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { authFetch } from './auth-fetch';
 import type { DirectMessagesResponse } from './types';
 

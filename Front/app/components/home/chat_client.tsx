@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { PrimaryButton } from "./buttons";
 import { GifPicker } from "./gif-picker";
 import { useHomeWs } from "@/components/home/home-ws-provider";
-import type { ChannelMessage, ServerMember } from "@/lib/types";
+import type { ChannelMessage, MessageReaction, ServerMember } from "@/lib/types";
 import { mergeMessages } from "@/lib/messages";
 
 type Props = {
@@ -40,6 +40,7 @@ export function ChatClient({
     const [editingValue, setEditingValue] = useState("");
     const [actionError, setActionError] = useState<string | null>(null);
     const [showGifPicker, setShowGifPicker] = useState(false);
+    const [reactions, setReactions] = useState<Record<string, MessageReaction[]>>({});
     const pendingRef = useRef<Array<{ id: string; content: string }>>([]);
     const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const endRef = useRef<HTMLDivElement | null>(null);
@@ -156,6 +157,43 @@ export function ChatClient({
                         next.delete(userId);
                     }
                     return next;
+                });
+            }
+            if (wsEvent.type === "MessagePinned") {
+                if (wsEvent.data.channel_id !== channelId) {
+                    return;
+                }
+                const { message_id, pinned } = wsEvent.data;
+                setMessages((prev) =>
+                    prev.map((m) => m.id === message_id ? { ...m, pinned } : m),
+                );
+            }
+            if (wsEvent.type === "ReactionAdded") {
+                if (wsEvent.data.channel_id !== channelId) {
+                    return;
+                }
+                const { message_id, reaction } = wsEvent.data;
+                setReactions((prev) => {
+                    const existing = prev[message_id] ?? [];
+                    const deduped = existing.filter(
+                        (r) => !(r.user_id === reaction.user_id && r.emoji === reaction.emoji),
+                    );
+                    return { ...prev, [message_id]: [...deduped, reaction] };
+                });
+            }
+            if (wsEvent.type === "ReactionRemoved") {
+                if (wsEvent.data.channel_id !== channelId) {
+                    return;
+                }
+                const { message_id, user_id, emoji } = wsEvent.data;
+                setReactions((prev) => {
+                    const existing = prev[message_id] ?? [];
+                    return {
+                        ...prev,
+                        [message_id]: existing.filter(
+                            (r) => !(r.user_id === user_id && r.emoji === emoji),
+                        ),
+                    };
                 });
             }
         });
@@ -488,6 +526,23 @@ export function ChatClient({
                                         >
                                             {t("common.delete")}
                                         </button>
+                                    </div>
+                                ) : null}
+                                {message.pinned ? (
+                                    <span className="home-chat-pinned">📌</span>
+                                ) : null}
+                                {(reactions[message.id] ?? []).length > 0 ? (
+                                    <div className="home-chat-reactions">
+                                        {Object.entries(
+                                            (reactions[message.id] ?? []).reduce<Record<string, number>>(
+                                                (acc, r) => ({ ...acc, [r.emoji]: (acc[r.emoji] ?? 0) + 1 }),
+                                                {},
+                                            ),
+                                        ).map(([emoji, count]) => (
+                                            <span key={emoji} className="home-chat-reaction">
+                                                {emoji} {count}
+                                            </span>
+                                        ))}
                                     </div>
                                 ) : null}
                             </div>
