@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HomeIcon } from "@heroicons/react/24/solid";
 
 type Props = {
     servers: Array<{ id: string; name: string; icon: string; notif?: number }>;
@@ -12,7 +13,7 @@ export function ServerBar({ servers, onAdd, onSelect, activeId }: Props) {
     return (
         <aside className="home-servers">
             <Link className="home-logo home-logo-btn" href="/home" aria-label="Home">
-                Q
+                <HomeIcon className="h-6 w-6 text-white" />
             </Link>
             <div className="home-divider" />
             <nav className="home-servers-list">
