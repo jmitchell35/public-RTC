@@ -71,9 +71,21 @@ export default function DirectMessageThread({
                 wsEvent.type === 'DirectMessage' &&
                 wsEvent.data.friend_id === friendState.id
             ) {
-                setMessages((prev) =>
-                    mergeMessages(prev, [wsEvent.data.message]),
-                );
+                const msg = wsEvent.data.message;
+                setMessages((prev) => {
+                    if (msg.author_id === me.id) {
+                        const firstTemp = prev.find((m) =>
+                            m.id.startsWith('temp-'),
+                        );
+                        if (firstTemp) {
+                            return mergeMessages(
+                                prev.filter((m) => m.id !== firstTemp.id),
+                                [msg],
+                            );
+                        }
+                    }
+                    return mergeMessages(prev, [msg]);
+                });
             }
             if (
                 wsEvent.type === 'DirectMessageUpdated' &&
