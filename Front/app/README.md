@@ -25,7 +25,7 @@ Available tasks:
 |---|---|
 | `mise run install` | Install npm dependencies |
 | `mise run dev` | Start Next.js dev server (`localhost:3000`) |
-| `mise run build` | Production build |
+| `mise run build` | Production build (copies static assets automatically) |
 | `mise run lint` | ESLint |
 | `mise run desktop` | Tauri desktop app (dev mode) |
 | `mise run desktop-build` | Tauri desktop app (release build) |
