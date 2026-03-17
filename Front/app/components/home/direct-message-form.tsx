@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { GifPicker } from './gif-picker';
 
 type DirectMessageFormProps = {
     onSend: (content: string) => Promise<string | null>;
@@ -13,6 +14,7 @@ export default function DirectMessageForm({
 }: DirectMessageFormProps) {
     const [value, setValue] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showGifPicker, setShowGifPicker] = useState(false);
     const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const typingActive = useRef(false);
 
@@ -61,9 +63,23 @@ export default function DirectMessageForm({
         };
     }, [onTyping]);
 
+    const selectGif = async (url: string) => {
+        setShowGifPicker(false);
+        const error = await onSend(url);
+        if (error) {
+            setErrorMessage(error);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
+            <div className="relative flex items-center gap-2">
+                {showGifPicker && (
+                    <GifPicker
+                        onSelect={selectGif}
+                        onClose={() => setShowGifPicker(false)}
+                    />
+                )}
                 <input
                     name="content"
                     type="text"
@@ -73,6 +89,13 @@ export default function DirectMessageForm({
                     className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
                     required
                 />
+                <button
+                    type="button"
+                    onClick={() => setShowGifPicker((v) => !v)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50"
+                >
+                    GIF
+                </button>
                 <button
                     type="submit"
                     disabled={!value.trim()}
