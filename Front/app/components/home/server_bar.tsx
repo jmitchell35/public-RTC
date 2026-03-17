@@ -19,7 +19,7 @@ export function ServerBar({ servers, onAdd, onSelect, activeId }: Props) {
         <aside className="flex h-full w-20 flex-col items-center gap-3 overflow-x-hidden overflow-y-auto bg-[#0b1224] py-4 text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
             <Link
                 className="grid h-12 w-12 cursor-pointer place-items-center rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 text-lg font-bold text-inherit no-underline transition-transform hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(99,102,241,0.35)]"
-                href="/home/dm"
+                href="/home"
                 aria-label="Home"
             >
                 <HomeIcon className="h-6 w-6 text-white" />

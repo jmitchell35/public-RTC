@@ -3,7 +3,7 @@ import DmSidebar from '@/components/home/dm-sidebar';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DmLayout({
+export default async function DmShellLayout({
     children,
 }: {
     children: React.ReactNode;

@@ -17,7 +17,7 @@ import Link from 'next/link';
 export default function LoginForm() {
     const { t } = useTranslation();
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get('callbackUrl') || '/home/dm';
+    const callbackUrl = searchParams.get('callbackUrl') || '/home';
     const [errorMessage, formAction, isPending] = useActionState(
         authenticate,
         undefined,
