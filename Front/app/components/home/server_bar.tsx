@@ -12,7 +12,7 @@ type Props = {
 export function ServerBar({ servers, onAdd, onSelect, activeId }: Props) {
     return (
         <aside className="home-servers">
-            <Link className="home-logo home-logo-btn" href="/home" aria-label="Home">
+            <Link className="home-logo home-logo-btn" href="/home/dm" aria-label="Home">
                 <HomeIcon className="h-6 w-6 text-white" />
             </Link>
             <div className="home-divider" />

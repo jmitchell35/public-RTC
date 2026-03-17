@@ -296,7 +296,7 @@ export default function DirectMessageThread({
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 py-4">
                 <div className="flex items-center gap-3">
                     <Link
-                        href="/home"
+                        href="/home/dm"
                         className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4" />
