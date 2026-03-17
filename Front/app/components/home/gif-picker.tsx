@@ -87,7 +87,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                     autoFocus
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
-                    placeholder="Search GIFs..."
+                    placeholder={t('gif.search_placeholder')}
                     style={{
                         width: '100%',
                         padding: '6px 10px',
@@ -120,7 +120,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                 )}
                 {!loading && !error && gifs.length === 0 && (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 24, color: '#94a3b8', fontSize: 13 }}>
-                        No GIFs found
+                        {t('gif.no_results')}
                     </div>
                 )}
                 {!loading && gifs.map((gif) => (
@@ -158,7 +158,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                 ))}
             </div>
             <div style={{ padding: '4px 8px', borderTop: '1px solid #f1f5f9', textAlign: 'right' }}>
-                <span style={{ fontSize: 10, color: '#94a3b8' }}>Powered by Tenor</span>
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>{t('gif.powered_by')}</span>
             </div>
         </div>
     );

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import type { DirectMessage, UserPublic } from '@/lib/types';
 import DirectMessageForm from '@/components/home/direct-message-form';
@@ -13,18 +14,11 @@ type DirectMessageThreadProps = {
     initialMessages: DirectMessage[];
 };
 
-const statusStyles: Record<string, { label: string; dot: string }> = {
-    online: { label: 'Online', dot: 'bg-emerald-500' },
-    offline: { label: 'Offline', dot: 'bg-slate-400' },
-    dnd: { label: 'Do Not Disturb', dot: 'bg-red-500' },
+const statusDots: Record<string, string> = {
+    online: 'bg-emerald-500',
+    offline: 'bg-slate-400',
+    dnd: 'bg-red-500',
 };
-
-function getStatus(status?: string) {
-    if (!status) {
-        return statusStyles.offline;
-    }
-    return statusStyles[status] ?? statusStyles.offline;
-}
 
 function mergeMessages(
     existing: DirectMessage[],
@@ -44,6 +38,7 @@ export default function DirectMessageThread({
     friend,
     initialMessages,
 }: DirectMessageThreadProps) {
+    const { t } = useTranslation();
     const ws = useHomeWs();
     const [messages, setMessages] = useState<DirectMessage[]>(initialMessages);
     const [friendState, setFriendState] = useState<UserPublic>(friend);
@@ -53,10 +48,10 @@ export default function DirectMessageThread({
     const [actionError, setActionError] = useState<string | null>(null);
     const endRef = useRef<HTMLDivElement | null>(null);
 
-    const status = useMemo(
-        () => getStatus(friendState.status),
-        [friendState.status],
-    );
+    const status = useMemo(() => ({
+        label: t(`status.${friendState.status ?? 'offline'}`, t('status.offline')),
+        dot: statusDots[friendState.status ?? 'offline'] ?? statusDots.offline,
+    }), [friendState.status, t]);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -158,12 +153,12 @@ export default function DirectMessageThread({
                     setMessages((prev) =>
                         prev.filter((message) => message.id !== tempId),
                     );
-                    return 'Please log in again.';
+                    return t('dm.login_again');
                 }
                 setMessages((prev) =>
                     prev.filter((message) => message.id !== tempId),
                 );
-                return 'Something went wrong.';
+                return t('dm.something_wrong');
             }
             const data = (await response.json()) as {
                 messages?: DirectMessage[];
@@ -186,7 +181,7 @@ export default function DirectMessageThread({
             setMessages((prev) =>
                 prev.filter((message) => message.id !== tempId),
             );
-            return 'Backend unreachable. Start the backend and check BACKEND_URL.';
+            return t('common.backend_unreachable');
         }
     };
 
@@ -208,7 +203,7 @@ export default function DirectMessageThread({
         }
         const content = editingValue.trim();
         if (!content) {
-            setActionError('Message cannot be empty.');
+            setActionError(t('chat.empty_message'));
             return;
         }
         setActionError(null);
@@ -220,18 +215,18 @@ export default function DirectMessageThread({
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    setActionError('Please log in again.');
+                    setActionError(t('dm.login_again'));
                     return;
                 }
                 if (response.status === 403) {
-                    setActionError('You can only edit your own messages.');
+                    setActionError(t('dm.edit_own_only'));
                     return;
                 }
                 if (response.status === 404) {
-                    setActionError('Message not found.');
+                    setActionError(t('dm.msg_not_found'));
                     return;
                 }
-                setActionError('Something went wrong.');
+                setActionError(t('dm.something_wrong'));
                 return;
             }
             const data = (await response.json()) as {
@@ -246,14 +241,12 @@ export default function DirectMessageThread({
             setEditingValue('');
         } catch (error) {
             console.error('Direct message edit failed', error);
-            setActionError(
-                'Backend unreachable. Start the backend and check BACKEND_URL.',
-            );
+            setActionError(t('common.backend_unreachable'));
         }
     };
 
     const removeMessage = async (message: DirectMessage) => {
-        if (!window.confirm('Delete this message?')) {
+        if (!window.confirm(t('chat.delete_confirm'))) {
             return;
         }
         setActionError(null);
@@ -263,18 +256,18 @@ export default function DirectMessageThread({
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    setActionError('Please log in again.');
+                    setActionError(t('dm.login_again'));
                     return;
                 }
                 if (response.status === 403) {
-                    setActionError('You can only delete your own messages.');
+                    setActionError(t('dm.delete_own_only'));
                     return;
                 }
                 if (response.status === 404) {
-                    setActionError('Message not found.');
+                    setActionError(t('dm.msg_not_found'));
                     return;
                 }
-                setActionError('Something went wrong.');
+                setActionError(t('dm.something_wrong'));
                 return;
             }
             setMessages((prev) =>
@@ -285,9 +278,7 @@ export default function DirectMessageThread({
             }
         } catch (error) {
             console.error('Direct message delete failed', error);
-            setActionError(
-                'Backend unreachable. Start the backend and check BACKEND_URL.',
-            );
+            setActionError(t('common.backend_unreachable'));
         }
     };
 
@@ -317,7 +308,7 @@ export default function DirectMessageThread({
                     </div>
                 </div>
                 <span className="text-xs text-slate-400">
-                    Friend code: {friendState.friend_code}
+                    {t('dm.friend_code', { code: friendState.friend_code })}
                 </span>
             </header>
 
@@ -325,7 +316,7 @@ export default function DirectMessageThread({
                 <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
                     {messages.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
-                            No messages yet. Say hello to start the conversation.
+                            {t('dm.no_messages')}
                         </div>
                     ) : (
                         messages.map((message) => {
@@ -387,7 +378,7 @@ export default function DirectMessageThread({
                                                             onClick={cancelEdit}
                                                             className="rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:bg-slate-50"
                                                         >
-                                                            Cancel
+                                                            {t('common.cancel')}
                                                         </button>
                                                         <button
                                                             type="button"
@@ -397,7 +388,7 @@ export default function DirectMessageThread({
                                                             }
                                                             className="rounded-md bg-blue-500 px-2 py-1 font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            Save
+                                                            {t('common.save')}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -423,7 +414,7 @@ export default function DirectMessageThread({
                                                                     : 'text-slate-400'
                                                             }`}
                                                         >
-                                                            edited
+                                                            {t('chat.edited')}
                                                         </span>
                                                     ) : null}
                                                 </div>
@@ -438,7 +429,7 @@ export default function DirectMessageThread({
                                                     }
                                                     className="hover:text-slate-600"
                                                 >
-                                                    Edit
+                                                    {t('common.edit')}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -447,7 +438,7 @@ export default function DirectMessageThread({
                                                     }
                                                     className="hover:text-red-500"
                                                 >
-                                                    Delete
+                                                    {t('common.delete')}
                                                 </button>
                                             </div>
                                         ) : null}
@@ -461,7 +452,7 @@ export default function DirectMessageThread({
 
                 <div className="rounded-2xl bg-white p-4 shadow-sm">
                     <div className="mb-2 text-xs text-slate-500">
-                        {isTyping ? `${friendState.username} is typing...` : ''}
+                        {isTyping ? t('chat.typing_one', { name: friendState.username }) : ''}
                     </div>
                     {actionError ? (
                         <div className="mb-2 text-xs text-red-500">

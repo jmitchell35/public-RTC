@@ -118,5 +118,25 @@
     "online": "Online",
     "offline": "Offline",
     "dnd": "Do Not Disturb"
+  },
+  "dm": {
+    "title": "Direct Messages",
+    "no_messages": "No messages yet. Say hello to start the conversation.",
+    "friend_code": "Friend code: {{code}}",
+    "back_to_friends": "Friends",
+    "unable_to_load": "Unable to load this conversation.",
+    "back_btn": "Back to friends",
+    "try_again_hint": "Please return to your friends list and try again.",
+    "login_again": "Please log in again.",
+    "something_wrong": "Something went wrong.",
+    "edit_own_only": "You can only edit your own messages.",
+    "delete_own_only": "You can only delete your own messages.",
+    "msg_not_found": "Message not found."
+  },
+  "gif": {
+    "search_placeholder": "Search GIFs...",
+    "no_results": "No GIFs found",
+    "send_gif": "Send a GIF",
+    "powered_by": "Powered by Tenor"
   }
 }

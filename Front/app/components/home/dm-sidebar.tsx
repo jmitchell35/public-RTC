@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UsersIcon } from '@heroicons/react/24/solid';
+import { useTranslation } from 'react-i18next';
 import type { UserPublic } from '@/lib/types';
 
 const STATUS_DOT: Record<string, string> = {
@@ -13,11 +14,12 @@ const STATUS_DOT: Record<string, string> = {
 
 export default function DmSidebar({ friends }: { friends: UserPublic[] }) {
     const pathname = usePathname();
+    const { t } = useTranslation();
 
     return (
         <aside className="home-channels">
             <div className="home-channels-title">
-                Direct Messages
+                {t('dm.title')}
             </div>
             <nav className="home-channels-list">
                 {friends.length === 0 && (
@@ -55,7 +57,7 @@ export default function DmSidebar({ friends }: { friends: UserPublic[] }) {
                 style={{ textDecoration: 'none', color: '#6b7280', marginTop: 4 }}
             >
                 <UsersIcon style={{ width: 14, height: 14, flexShrink: 0 }} />
-                Friends
+                {t('dm.back_to_friends')}
             </Link>
         </aside>
     );

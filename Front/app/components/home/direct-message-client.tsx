@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import type { DirectMessagesResponse, UserPublic } from '@/lib/types';
 import DirectMessageThread from '@/components/home/direct-message-thread';
 
@@ -20,6 +21,7 @@ export default function DirectMessageClient({
     friendId,
 }: DirectMessageClientProps) {
     const router = useRouter();
+    const { t } = useTranslation();
     const [state, setState] = useState<LoadedState | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export default function DirectMessageClient({
                 }
 
                 if (!meResponse.ok || !dmResponse.ok) {
-                    setError('Unable to load this conversation.');
+                    setError(t('dm.unable_to_load'));
                     return;
                 }
 
@@ -70,9 +72,7 @@ export default function DirectMessageClient({
                 });
             } catch (err) {
                 if (active) {
-                    setError(
-                        'Backend unreachable. Start the backend and check BACKEND_URL.',
-                    );
+                    setError(t('common.backend_unreachable'));
                 }
             }
         };
@@ -92,13 +92,13 @@ export default function DirectMessageClient({
                         {error}
                     </h1>
                     <p className="text-sm text-slate-500">
-                        Please return to your friends list and try again.
+                        {t('dm.try_again_hint')}
                     </p>
                     <Link
                         href="/home"
                         className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400"
                     >
-                        Back to friends
+                        {t('dm.back_btn')}
                     </Link>
                 </div>
             </main>

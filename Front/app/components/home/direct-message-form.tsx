@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GifPicker } from './gif-picker';
 
 type DirectMessageFormProps = {
@@ -12,6 +13,7 @@ export default function DirectMessageForm({
     onSend,
     onTyping,
 }: DirectMessageFormProps) {
+    const { t } = useTranslation();
     const [value, setValue] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [showGifPicker, setShowGifPicker] = useState(false);
@@ -22,7 +24,7 @@ export default function DirectMessageForm({
         event.preventDefault();
         const trimmed = value.trim();
         if (!trimmed) {
-            setErrorMessage('Message cannot be empty.');
+            setErrorMessage(t('chat.empty_message'));
             return;
         }
         setErrorMessage(null);
@@ -94,14 +96,14 @@ export default function DirectMessageForm({
                         color: '#64748b',
                         whiteSpace: 'nowrap',
                     }}
-                    title="Send a GIF"
+                    title={t('gif.send_gif')}
                 >
                     GIF
                 </button>
                 <input
                     name="content"
                     type="text"
-                    placeholder="Send a message"
+                    placeholder={t('chat.send_placeholder')}
                     value={value}
                     onChange={(event) => handleTyping(event.target.value)}
                     className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
@@ -112,7 +114,7 @@ export default function DirectMessageForm({
                     disabled={!value.trim()}
                     className="rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Send
+                    {t('chat.send')}
                 </button>
             </div>
             {errorMessage && (

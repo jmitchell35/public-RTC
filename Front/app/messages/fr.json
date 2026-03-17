@@ -118,5 +118,25 @@
     "online": "En ligne",
     "offline": "Hors ligne",
     "dnd": "Ne pas déranger"
+  },
+  "dm": {
+    "title": "Conversations",
+    "no_messages": "Pas encore de messages. Dites bonjour pour démarrer la conversation.",
+    "friend_code": "Code ami : {{code}}",
+    "back_to_friends": "Amis",
+    "unable_to_load": "Impossible de charger cette conversation.",
+    "back_btn": "Retour aux amis",
+    "try_again_hint": "Veuillez retourner à votre liste d'amis et réessayer.",
+    "login_again": "Veuillez vous reconnecter.",
+    "something_wrong": "Une erreur s'est produite.",
+    "edit_own_only": "Vous ne pouvez modifier que vos propres messages.",
+    "delete_own_only": "Vous ne pouvez supprimer que vos propres messages.",
+    "msg_not_found": "Message introuvable."
+  },
+  "gif": {
+    "search_placeholder": "Rechercher des GIFs...",
+    "no_results": "Aucun GIF trouvé",
+    "send_gif": "Envoyer un GIF",
+    "powered_by": "Propulsé par Tenor"
   }
 }
