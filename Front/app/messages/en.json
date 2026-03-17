@@ -15,7 +15,8 @@
     "dismiss": "Dismiss",
     "accept": "Accept",
     "ignore": "Ignore",
-    "backend_unreachable": "Backend unreachable."
+    "backend_unreachable": "Backend unreachable.",
+    "me": "Me"
   },
   "auth": {
     "login_title": "Please log in to continue.",
@@ -50,7 +51,8 @@
     "invite_code_label": "Invite code",
     "invite_code_placeholder": "Code",
     "create_failed": "Creation failed ({{status}}) {{text}}",
-    "join_failed": "Join failed ({{status}}) {{text}}"
+    "join_failed": "Join failed ({{status}}) {{text}}",
+    "add_server": "Add a server"
   },
   "server": {
     "channels": "Channels",

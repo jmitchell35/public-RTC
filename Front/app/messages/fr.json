@@ -15,7 +15,8 @@
     "dismiss": "Ignorer",
     "accept": "Accepter",
     "ignore": "Ignorer",
-    "backend_unreachable": "Backend inaccessible."
+    "backend_unreachable": "Backend inaccessible.",
+    "me": "Moi"
   },
   "auth": {
     "login_title": "Veuillez vous connecter pour continuer.",
@@ -50,7 +51,8 @@
     "invite_code_label": "Code d'invitation",
     "invite_code_placeholder": "Code",
     "create_failed": "Création échouée ({{status}}) {{text}}",
-    "join_failed": "Rejoindre échoué ({{status}}) {{text}}"
+    "join_failed": "Rejoindre échoué ({{status}}) {{text}}",
+    "add_server": "Ajouter un serveur"
   },
   "server": {
     "channels": "Salons",
