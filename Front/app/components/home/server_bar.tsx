@@ -1,8 +1,7 @@
 'use client';
 
-import Image from "next/image";
 import Link from "next/link";
-import { HomeIcon } from "@heroicons/react/24/solid";
+import { HomeIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 
@@ -55,8 +54,8 @@ export function ServerBar({ servers, onAdd, onSelect, activeId }: Props) {
             >
                 +
             </button>
-            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-white">
-                <Image src="/avatar.png" alt={t('common.me')} width={48} height={48} className="rounded-2xl" />
+            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-[#161f35]">
+                <UserCircleIcon className="h-8 w-8 text-slate-400" />
             </div>
         </aside>
     );
