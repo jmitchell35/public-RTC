@@ -292,7 +292,7 @@ export default function DirectMessageThread({
     };
 
     return (
-        <main className="flex min-h-screen flex-col bg-[#eef2f7] text-slate-900">
+        <main className="flex h-full flex-col bg-[#eef2f7] text-slate-900">
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 py-4">
                 <div className="flex items-center gap-3">
                     <Link
@@ -321,8 +321,8 @@ export default function DirectMessageThread({
                 </span>
             </header>
 
-            <section className="flex flex-1 flex-col gap-4 px-6 py-6">
-                <div className="flex-1 space-y-3 overflow-y-auto">
+            <section className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-6">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
                     {messages.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500">
                             No messages yet. Say hello to start the conversation.
