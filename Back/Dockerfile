@@ -13,12 +13,14 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && \
     cargo build --release && \
     rm -f target/release/deps/rtc_backend*
 
-# Copy source + migrations (embedded by sqlx::migrate!) + .sqlx offline cache
+# DATABASE_URL is required at build time for sqlx compile-time query checks
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
+# Copy source + migrations (embedded by sqlx::migrate! at compile time)
 COPY src ./src
 COPY migrations ./migrations
-COPY .sqlx ./.sqlx
 
-ENV SQLX_OFFLINE=true
 RUN cargo build --release
 
 # Stage 2: Runtime
