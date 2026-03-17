@@ -7,6 +7,7 @@ use crate::{
     ws::WsEvent,
 };
 use axum::{extract::{Path, Query, State}, routing::{delete, post}, Extension, Json, Router};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -43,7 +44,7 @@ pub struct ReactionsResponse {
 #[derive(Debug, Deserialize)]
 pub struct Pagination {
     pub limit: Option<i64>,
-    pub offset: Option<i64>,
+    pub before: Option<String>,
 }
 
 pub fn routes() -> Router<AppState> {
@@ -109,8 +110,15 @@ pub async fn list_messages(
         return Err(ApiError::Forbidden);
     }
     let limit = pagination.limit.unwrap_or(50).clamp(1, 100);
-    let offset = pagination.offset.unwrap_or(0).max(0);
-    let messages = db::messages::list_for_channel(&state.db, channel_id, limit, offset).await?;
+    let before: Option<DateTime<Utc>> = match pagination.before.as_deref() {
+        Some(raw) => {
+            let parsed = DateTime::parse_from_rfc3339(raw)
+                .map_err(|_| ApiError::BadRequest("invalid before cursor".to_string()))?;
+            Some(parsed.with_timezone(&Utc))
+        }
+        None => None,
+    };
+    let messages = db::messages::list_for_channel(&state.db, channel_id, limit, before).await?;
     Ok(Json(MessagesResponse { messages }))
 }
 

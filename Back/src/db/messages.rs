@@ -1,4 +1,5 @@
 use crate::{models::Message, utils::ApiError};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -27,20 +28,22 @@ pub async fn list_for_channel(
     pool: &PgPool,
     channel_id: Uuid,
     limit: i64,
-    offset: i64,
+    before: Option<DateTime<Utc>>,
 ) -> Result<Vec<Message>, ApiError> {
-    let messages = sqlx::query_as::<_, Message>(
+    let mut messages = sqlx::query_as::<_, Message>(
         r#"SELECT id, channel_id, author_id, content, created_at, edited_at, pinned
         FROM messages
         WHERE channel_id = $1
+          AND ($2::timestamptz IS NULL OR created_at < $2)
         ORDER BY created_at DESC
-        LIMIT $2 OFFSET $3"#,
+        LIMIT $3"#,
     )
     .bind(channel_id)
+    .bind(before)
     .bind(limit)
-    .bind(offset)
     .fetch_all(pool)
     .await?;
+    messages.reverse();
     Ok(messages)
 }
 
