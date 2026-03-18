@@ -241,6 +241,46 @@ export function ChatClient({
 
     const cancelEdit = () => { setEditingId(null); setEditingValue(""); };
 
+    // Fetch initial reactions for all loaded messages
+    useEffect(() => {
+        if (initialMessages.length === 0) return;
+        const ids = initialMessages.map((m) => m.id).filter((id) => !id.startsWith("temp-"));
+        Promise.allSettled(
+            ids.map((id) =>
+                fetch(`/api/messages/${id}/reactions`)
+                    .then((r) => r.ok ? r.json() : null)
+                    .then((data: { reactions?: import("@/lib/types").MessageReaction[] } | null) => {
+                        if (data?.reactions?.length) {
+                            setReactions((prev) => ({ ...prev, [id]: data.reactions! }));
+                        }
+                    }),
+            ),
+        ).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [channelId]);
+
+    const addReaction = async (messageId: string, emoji: string) => {
+        try {
+            const res = await fetch(`/api/messages/${messageId}/reactions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emoji }),
+            });
+            if (!res.ok) { setActionError(t("chat.reaction_failed")); }
+        } catch { setActionError(t("common.backend_unreachable")); }
+    };
+
+    const removeReaction = async (messageId: string, emoji: string) => {
+        try {
+            const res = await fetch(`/api/messages/${messageId}/reactions`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emoji }),
+            });
+            if (!res.ok) { setActionError(t("chat.reaction_failed")); }
+        } catch { setActionError(t("common.backend_unreachable")); }
+    };
+
     const saveEdit = async () => {
         if (!editingId) return;
         const content = editingValue.trim();
@@ -305,9 +345,13 @@ export function ChatClient({
                     const isMe = message.author_id === currentUserId;
                     const isEditing = editingId === message.id;
                     const isTemp = message.id.startsWith("temp-");
-                    const msgReactions = (reactions[message.id] ?? []).reduce<Record<string, number>>(
+                    const msgReactionList = reactions[message.id] ?? [];
+                    const msgReactions = msgReactionList.reduce<Record<string, number>>(
                         (acc, r) => ({ ...acc, [r.emoji]: (acc[r.emoji] ?? 0) + 1 }),
                         {},
+                    );
+                    const myReactions = new Set(
+                        msgReactionList.filter((r) => r.user_id === currentUserId).map((r) => r.emoji),
                     );
 
                     return (
@@ -326,6 +370,9 @@ export function ChatClient({
                                 editedAt={message.edited_at}
                                 pinned={message.pinned}
                                 reactions={msgReactions}
+                                myReactions={myReactions}
+                                onAddReaction={(emoji) => addReaction(message.id, emoji)}
+                                onRemoveReaction={(emoji) => removeReaction(message.id, emoji)}
                                 authorName={author}
                                 createdAt={message.created_at}
                                 isEditing={isEditing}
