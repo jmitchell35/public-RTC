@@ -117,6 +117,9 @@ export default function HomeClient({
             switch (wsEvent.type) {
                 case 'FriendRequestCreated': {
                     const { direction, request } = wsEvent.data;
+                    if (direction === 'incoming') {
+                        sendNotification('RTC', `${request.user.username} sent you a friend request`).catch(() => {});
+                    }
                     setRequests((prev) => {
                         if (direction === 'incoming') {
                             return {

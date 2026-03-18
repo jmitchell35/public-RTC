@@ -1,10 +1,11 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSelectedLayoutSegment } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ServerBar } from '@/components/home/server_bar';
 import { useHomeWs } from '@/components/home/home-ws-provider';
+import { sendNotification } from '@/lib/notify';
 
 type Server = { id: string; name: string; icon: string; notif?: number };
 
@@ -16,6 +17,8 @@ export default function HomeShell({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const ws = useHomeWs();
     const isConnected = ws?.isConnected ?? false;
+    const activeIdRef = useRef(activeId);
+    useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
 
     const [servers, setServers] = useState<Server[]>([]);
     const [loading, setLoading] = useState(true);
@@ -80,6 +83,10 @@ export default function HomeShell({ children }: { children: ReactNode }) {
                         s.id === wsEvent.data.server_id ? { ...s, notif: (s.notif ?? 0) + 1 } : s,
                     ),
                 );
+                // Send OS notification only when the user is not on that server
+                if (wsEvent.data.server_id !== activeIdRef.current) {
+                    sendNotification('RTC', wsEvent.data.content).catch(() => {});
+                }
             }
         });
     }, [ws]);
