@@ -241,10 +241,15 @@ export function ChatClient({
 
     const cancelEdit = () => { setEditingId(null); setEditingValue(""); };
 
-    // Fetch initial reactions for all loaded messages
+    // Reset reactions when switching channels to avoid stale data
     useEffect(() => {
-        if (initialMessages.length === 0) return;
+        setReactions({});
+    }, [channelId]);
+
+    // Fetch reactions whenever the message list for this channel is available
+    useEffect(() => {
         const ids = initialMessages.map((m) => m.id).filter((id) => !id.startsWith("temp-"));
+        if (ids.length === 0) return;
         Promise.allSettled(
             ids.map((id) =>
                 fetch(`/api/messages/${id}/reactions`)
@@ -256,8 +261,7 @@ export function ChatClient({
                     }),
             ),
         ).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [channelId]);
+    }, [initialMessages]);
 
     const syncReactions = useCallback(async (messageId: string) => {
         try {
