@@ -138,6 +138,15 @@ export default function ServerPage() {
         };
     }, [ws, serverId, isConnected]);
 
+    const refreshMembers = useCallback(async () => {
+        try {
+            const resp = await fetchJson<{ members: ServerMember[] }>(`/api/servers/${serverId}/members`);
+            setMembers(resp.members);
+        } catch (err) {
+            console.warn("refreshMembers failed", err);
+        }
+    }, [serverId]);
+
     useEffect(() => {
         if (!ws || !serverId) return;
         return ws.addListener((wsEvent) => {
@@ -225,15 +234,6 @@ export default function ServerPage() {
             setActiveChannelId(resp.channels[0]?.id ?? "");
         }
     };
-
-    const refreshMembers = useCallback(async () => {
-        try {
-            const resp = await fetchJson<{ members: ServerMember[] }>(`/api/servers/${serverId}/members`);
-            setMembers(resp.members);
-        } catch (err) {
-            console.warn("refreshMembers failed", err);
-        }
-    }, [serverId]);
 
     // ── Channel actions ──────────────────────────────────────────────────────
 
