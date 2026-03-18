@@ -44,7 +44,9 @@
     "send_failed": "Failed to send message.",
     "empty_message": "Message cannot be empty.",
     "update_failed": "Failed to update message.",
-    "delete_failed": "Failed to delete message."
+    "delete_failed": "Failed to delete message.",
+    "add_reaction": "Add reaction",
+    "reaction_failed": "Failed to update reaction."
   },
   "shell": {
     "server_dialog_title": "Server",

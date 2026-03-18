@@ -44,7 +44,9 @@
     "send_failed": "Échec de l'envoi du message.",
     "empty_message": "Le message ne peut pas être vide.",
     "update_failed": "Échec de la modification du message.",
-    "delete_failed": "Échec de la suppression du message."
+    "delete_failed": "Échec de la suppression du message.",
+    "add_reaction": "Ajouter une réaction",
+    "reaction_failed": "Échec de la mise à jour de la réaction."
   },
   "shell": {
     "server_dialog_title": "Serveur",
