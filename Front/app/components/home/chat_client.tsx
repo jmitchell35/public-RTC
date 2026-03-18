@@ -249,7 +249,7 @@ export function ChatClient({
             ids.map((id) =>
                 fetch(`/api/messages/${id}/reactions`)
                     .then((r) => r.ok ? r.json() : null)
-                    .then((data: { reactions?: import("@/lib/types").MessageReaction[] } | null) => {
+                    .then((data: { reactions?: MessageReaction[] } | null) => {
                         if (data?.reactions?.length) {
                             setReactions((prev) => ({ ...prev, [id]: data.reactions! }));
                         }
@@ -259,6 +259,17 @@ export function ChatClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [channelId]);
 
+    const syncReactions = useCallback(async (messageId: string) => {
+        try {
+            const res = await fetch(`/api/messages/${messageId}/reactions`);
+            if (!res.ok) return;
+            const data = (await res.json()) as { reactions?: MessageReaction[] };
+            if (data?.reactions) {
+                setReactions((prev) => ({ ...prev, [messageId]: data.reactions! }));
+            }
+        } catch { /* ignore */ }
+    }, []);
+
     const addReaction = async (messageId: string, emoji: string) => {
         try {
             const res = await fetch(`/api/messages/${messageId}/reactions`, {
@@ -267,15 +278,14 @@ export function ChatClient({
                 body: JSON.stringify({ emoji }),
             });
             if (!res.ok) {
-                const body = await res.text().catch(() => "");
-                console.error(`[addReaction] ${res.status}:`, body);
-                if (res.status === 409) return; // already reacted, ignore
-                setActionError(`${t("chat.reaction_failed")} (${res.status})`);
+                if (res.status === 409) {
+                    // Reaction already exists in DB but not in local state — sync it
+                    await syncReactions(messageId);
+                    return;
+                }
+                setActionError(t("chat.reaction_failed"));
             }
-        } catch (err) {
-            console.error("[addReaction] fetch failed:", err);
-            setActionError(t("common.backend_unreachable"));
-        }
+        } catch { setActionError(t("common.backend_unreachable")); }
     };
 
     const removeReaction = async (messageId: string, emoji: string) => {
@@ -285,15 +295,8 @@ export function ChatClient({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ emoji }),
             });
-            if (!res.ok) {
-                const body = await res.text().catch(() => "");
-                console.error(`[removeReaction] ${res.status}:`, body);
-                setActionError(`${t("chat.reaction_failed")} (${res.status})`);
-            }
-        } catch (err) {
-            console.error("[removeReaction] fetch failed:", err);
-            setActionError(t("common.backend_unreachable"));
-        }
+            if (!res.ok) { setActionError(t("chat.reaction_failed")); }
+        } catch { setActionError(t("common.backend_unreachable")); }
     };
 
     const saveEdit = async () => {
