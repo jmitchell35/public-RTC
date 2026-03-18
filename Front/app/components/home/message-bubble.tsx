@@ -209,7 +209,7 @@ export function MessageBubble({
                                     type="button"
                                     onClick={() => reacted ? onRemoveReaction?.(emoji) : onAddReaction?.(emoji)}
                                     className={clsx(
-                                        'cursor-pointer rounded-full px-2 py-0.5 text-xs transition',
+                                        'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs leading-none transition',
                                         reacted
                                             ? isMe
                                                 ? 'bg-white/40 ring-1 ring-white/60'
@@ -219,7 +219,8 @@ export function MessageBubble({
                                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
                                     )}
                                 >
-                                    {emoji} {count}
+                                    <span className="text-sm leading-none">{emoji}</span>
+                                    <span>{count}</span>
                                 </button>
                             );
                         }) : null}
@@ -230,10 +231,10 @@ export function MessageBubble({
                                     title={t('chat.add_reaction')}
                                     onClick={() => setPickerOpen((v) => !v)}
                                     className={clsx(
-                                        'cursor-pointer rounded-full px-1.5 py-0.5 text-xs transition',
+                                        'cursor-pointer rounded-full px-2.5 py-1 text-base font-bold leading-none transition',
                                         isMe
-                                            ? 'text-indigo-200 hover:bg-white/20 hover:text-white'
-                                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600',
+                                            ? 'bg-white/20 text-indigo-100 hover:bg-white/30 hover:text-white'
+                                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800',
                                     )}
                                 >
                                     +
