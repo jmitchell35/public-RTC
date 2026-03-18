@@ -266,8 +266,16 @@ export function ChatClient({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ emoji }),
             });
-            if (!res.ok) { setActionError(t("chat.reaction_failed")); }
-        } catch { setActionError(t("common.backend_unreachable")); }
+            if (!res.ok) {
+                const body = await res.text().catch(() => "");
+                console.error(`[addReaction] ${res.status}:`, body);
+                if (res.status === 409) return; // already reacted, ignore
+                setActionError(`${t("chat.reaction_failed")} (${res.status})`);
+            }
+        } catch (err) {
+            console.error("[addReaction] fetch failed:", err);
+            setActionError(t("common.backend_unreachable"));
+        }
     };
 
     const removeReaction = async (messageId: string, emoji: string) => {
@@ -277,8 +285,15 @@ export function ChatClient({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ emoji }),
             });
-            if (!res.ok) { setActionError(t("chat.reaction_failed")); }
-        } catch { setActionError(t("common.backend_unreachable")); }
+            if (!res.ok) {
+                const body = await res.text().catch(() => "");
+                console.error(`[removeReaction] ${res.status}:`, body);
+                setActionError(`${t("chat.reaction_failed")} (${res.status})`);
+            }
+        } catch (err) {
+            console.error("[removeReaction] fetch failed:", err);
+            setActionError(t("common.backend_unreachable"));
+        }
     };
 
     const saveEdit = async () => {
