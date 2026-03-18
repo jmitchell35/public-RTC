@@ -1,9 +1,12 @@
 'use client';
 
 import clsx from 'clsx';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const GIF_RE = /^https?:\/\/.+\.(gif|webp)(\?.*)?$/i;
+
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
 
 export type MessageBubbleProps = {
     content: string;
@@ -12,6 +15,9 @@ export type MessageBubbleProps = {
     editedAt?: string | null;
     pinned?: boolean;
     reactions?: Record<string, number>;
+    myReactions?: Set<string>;
+    onAddReaction?: (emoji: string) => void;
+    onRemoveReaction?: (emoji: string) => void;
     // channel variant only
     authorName?: string;
     createdAt?: string;
@@ -33,6 +39,9 @@ export function MessageBubble({
     editedAt,
     pinned,
     reactions,
+    myReactions,
+    onAddReaction,
+    onRemoveReaction,
     authorName,
     createdAt,
     isEditing,
@@ -47,6 +56,19 @@ export function MessageBubble({
     const { t } = useTranslation();
     const isChannel = variant === 'channel';
     const isGif = !isEditing && GIF_RE.test(content);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const pickerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!pickerOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+                setPickerOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [pickerOpen]);
 
     const bubbleBase = isChannel
         ? clsx(
@@ -152,6 +174,9 @@ export function MessageBubble({
     ) : null;
 
     if (isChannel) {
+        const hasReactions = reactions && Object.keys(reactions).length > 0;
+        const canReact = !isTemp && (onAddReaction || onRemoveReaction);
+
         return (
             <div className={bubbleBase}>
                 {authorName ? (
@@ -174,13 +199,70 @@ export function MessageBubble({
                 {isEditing ? editInput : messageContent}
                 {actions}
                 {pinned ? <span className="mt-1 text-[11px] opacity-70">📌</span> : null}
-                {reactions && Object.keys(reactions).length > 0 ? (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                        {Object.entries(reactions).map(([emoji, count]) => (
-                            <span key={emoji} className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
-                                {emoji} {count}
-                            </span>
-                        ))}
+                {(hasReactions || canReact) ? (
+                    <div className="relative mt-1 flex flex-wrap items-center gap-1">
+                        {hasReactions ? Object.entries(reactions!).map(([emoji, count]) => {
+                            const reacted = myReactions?.has(emoji) ?? false;
+                            return (
+                                <button
+                                    key={emoji}
+                                    type="button"
+                                    onClick={() => reacted ? onRemoveReaction?.(emoji) : onAddReaction?.(emoji)}
+                                    className={clsx(
+                                        'cursor-pointer rounded-full px-2 py-0.5 text-xs transition',
+                                        reacted
+                                            ? isMe
+                                                ? 'bg-white/40 ring-1 ring-white/60'
+                                                : 'bg-indigo-100 ring-1 ring-indigo-300 text-indigo-700'
+                                            : isMe
+                                                ? 'bg-white/20 hover:bg-white/30'
+                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
+                                    )}
+                                >
+                                    {emoji} {count}
+                                </button>
+                            );
+                        }) : null}
+                        {canReact ? (
+                            <div ref={pickerRef} className="relative">
+                                <button
+                                    type="button"
+                                    title={t('chat.add_reaction')}
+                                    onClick={() => setPickerOpen((v) => !v)}
+                                    className={clsx(
+                                        'cursor-pointer rounded-full px-1.5 py-0.5 text-xs transition',
+                                        isMe
+                                            ? 'text-indigo-200 hover:bg-white/20 hover:text-white'
+                                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600',
+                                    )}
+                                >
+                                    +
+                                </button>
+                                {pickerOpen ? (
+                                    <div className={clsx(
+                                        'absolute bottom-full left-0 z-20 mb-1 flex gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg',
+                                    )}>
+                                        {QUICK_EMOJIS.map((e) => (
+                                            <button
+                                                key={e}
+                                                type="button"
+                                                onClick={() => {
+                                                    const reacted = myReactions?.has(e) ?? false;
+                                                    if (reacted) { onRemoveReaction?.(e); } else { onAddReaction?.(e); }
+                                                    setPickerOpen(false);
+                                                }}
+                                                className={clsx(
+                                                    'cursor-pointer rounded-lg p-1 text-base transition hover:bg-slate-100',
+                                                    myReactions?.has(e) && 'bg-indigo-50',
+                                                )}
+                                            >
+                                                {e}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : null}
                     </div>
                 ) : null}
             </div>
