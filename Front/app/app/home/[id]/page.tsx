@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SecondaryButton } from "@/components/home/buttons";
@@ -169,7 +169,7 @@ export default function ServerPage() {
                 refreshMembers().catch(() => {});
             }
         });
-    }, [ws, serverId]);
+    }, [ws, serverId, refreshMembers]);
 
     useEffect(() => {
         let cancelled = false;
@@ -226,14 +226,14 @@ export default function ServerPage() {
         }
     };
 
-    const refreshMembers = async () => {
+    const refreshMembers = useCallback(async () => {
         try {
             const resp = await fetchJson<{ members: ServerMember[] }>(`/api/servers/${serverId}/members`);
             setMembers(resp.members);
         } catch (err) {
             console.warn("refreshMembers failed", err);
         }
-    };
+    }, [serverId]);
 
     // ── Channel actions ──────────────────────────────────────────────────────
 

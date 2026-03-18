@@ -112,7 +112,7 @@ export default function DirectMessageThread({
                 setIsTyping(wsEvent.data.is_typing);
             }
         });
-    }, [ws, friendState.id, editingId]);
+    }, [ws, friendState.id, editingId, me.id]);
 
     const sendTyping = (typing: boolean) => {
         ws?.send({

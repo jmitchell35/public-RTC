@@ -197,7 +197,7 @@ export default function HomeClient({
                     break;
             }
         });
-    }, [ws, me?.id]);
+    }, [ws, me?.id, friends]);
 
     if (!me) {
         return (

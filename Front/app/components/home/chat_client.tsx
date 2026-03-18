@@ -243,6 +243,7 @@ export function ChatClient({
 
     // Reset reactions when switching channels to avoid stale data
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setReactions({});
     }, [channelId]);
 

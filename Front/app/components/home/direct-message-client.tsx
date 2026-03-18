@@ -70,7 +70,7 @@ export default function DirectMessageClient({
                     friend: dmData.friend,
                     messages: dmData.messages,
                 });
-            } catch (err) {
+            } catch {
                 if (active) {
                     setError(t('common.backend_unreachable'));
                 }
@@ -82,7 +82,7 @@ export default function DirectMessageClient({
         return () => {
             active = false;
         };
-    }, [friendId, router]);
+    }, [friendId, router, t]);
 
     if (error) {
         return (
