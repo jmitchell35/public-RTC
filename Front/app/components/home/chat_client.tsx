@@ -375,6 +375,12 @@ export function ChatClient({
                     const myReactions = new Set(
                         msgReactionList.filter((r) => r.user_id === currentUserId).map((r) => r.emoji),
                     );
+                    const reactionUsers = msgReactionList.reduce<Record<string, string[]>>((acc, r) => {
+                        const name = r.user_id === currentUserId
+                            ? t("common.me")
+                            : (memberMap.get(r.user_id) ?? t("common.unknown", "Unknown"));
+                        return { ...acc, [r.emoji]: [...(acc[r.emoji] ?? []), name] };
+                    }, {});
 
                     return (
                         <div
@@ -393,6 +399,7 @@ export function ChatClient({
                                 pinned={message.pinned}
                                 reactions={msgReactions}
                                 myReactions={myReactions}
+                                reactionUsers={reactionUsers}
                                 onAddReaction={(emoji) => addReaction(message.id, emoji)}
                                 onRemoveReaction={(emoji) => removeReaction(message.id, emoji)}
                                 authorName={author}

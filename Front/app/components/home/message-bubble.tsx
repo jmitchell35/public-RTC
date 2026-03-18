@@ -16,6 +16,7 @@ export type MessageBubbleProps = {
     pinned?: boolean;
     reactions?: Record<string, number>;
     myReactions?: Set<string>;
+    reactionUsers?: Record<string, string[]>;
     onAddReaction?: (emoji: string) => void;
     onRemoveReaction?: (emoji: string) => void;
     // channel variant only
@@ -40,6 +41,7 @@ export function MessageBubble({
     pinned,
     reactions,
     myReactions,
+    reactionUsers,
     onAddReaction,
     onRemoveReaction,
     authorName,
@@ -57,6 +59,7 @@ export function MessageBubble({
     const isChannel = variant === 'channel';
     const isGif = !isEditing && GIF_RE.test(content);
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [hoveredEmoji, setHoveredEmoji] = useState<string | null>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -203,25 +206,38 @@ export function MessageBubble({
                     <div className="relative mt-1 flex flex-wrap items-center gap-1">
                         {hasReactions ? Object.entries(reactions!).map(([emoji, count]) => {
                             const reacted = myReactions?.has(emoji) ?? false;
+                            const users = reactionUsers?.[emoji] ?? [];
                             return (
-                                <button
-                                    key={emoji}
-                                    type="button"
-                                    onClick={() => reacted ? onRemoveReaction?.(emoji) : onAddReaction?.(emoji)}
-                                    className={clsx(
-                                        'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs leading-none transition',
-                                        reacted
-                                            ? isMe
-                                                ? 'bg-white/40 ring-1 ring-white/60'
-                                                : 'bg-indigo-100 ring-1 ring-indigo-300 text-indigo-700'
-                                            : isMe
-                                                ? 'bg-white/20 hover:bg-white/30'
-                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
-                                    )}
-                                >
-                                    <span className="text-sm leading-none">{emoji}</span>
-                                    <span>{count}</span>
-                                </button>
+                                <div key={emoji} className="relative">
+                                    {hoveredEmoji === emoji && users.length > 0 ? (
+                                        <div className={clsx(
+                                            'pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg px-2 py-1 text-[11px] font-medium shadow-md',
+                                            isMe ? 'bg-slate-800 text-white' : 'bg-slate-800 text-white',
+                                        )}>
+                                            {users.join(', ')}
+                                            <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                                        </div>
+                                    ) : null}
+                                    <button
+                                        type="button"
+                                        onClick={() => reacted ? onRemoveReaction?.(emoji) : onAddReaction?.(emoji)}
+                                        onMouseEnter={() => setHoveredEmoji(emoji)}
+                                        onMouseLeave={() => setHoveredEmoji(null)}
+                                        className={clsx(
+                                            'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs leading-none transition',
+                                            reacted
+                                                ? isMe
+                                                    ? 'bg-white/40 ring-1 ring-white/60'
+                                                    : 'bg-indigo-100 ring-1 ring-indigo-300 text-indigo-700'
+                                                : isMe
+                                                    ? 'bg-white/20 hover:bg-white/30'
+                                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
+                                        )}
+                                    >
+                                        <span className="text-sm leading-none">{emoji}</span>
+                                        <span>{count}</span>
+                                    </button>
+                                </div>
                             );
                         }) : null}
                         {canReact ? (
